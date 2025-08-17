@@ -2,41 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* City Mate Movie Design System - Cinema Dark Theme
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Cinema Dark Theme Colors */
+    --background: 12 25% 9%;              /* #181111 - Primary dark charcoal */
+    --background-secondary: 12 25% 19%;   /* #382929 - Secondary dark brown */
+    --foreground: 0 0% 100%;              /* #ffffff - Primary white text */
+    --foreground-secondary: 12 15% 70%;   /* #b89d9f - Secondary light brown text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 12 25% 19%;                   /* #382929 - Dark brown cards */
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 12 25% 19%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Cinema Red - Primary Brand Color */
+    --primary: 357 71% 54%;               /* #ea2a33 - Cinema red */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 357 71% 48%;         /* Darker red for hover */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 12 25% 32%;              /* #533c3d - Medium brown borders */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 12 25% 25%;
+    --muted-foreground: 12 15% 60%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 357 71% 54%;                /* Cinema red accent */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 12 25% 32%;                 /* #533c3d - Border color */
+    --input: 12 25% 19%;                  /* Dark inputs */
+    --ring: 357 71% 54%;                  /* Red focus ring */
 
     --radius: 0.5rem;
+
+    /* Cinema-specific design tokens */
+    --cinema-red: 357 71% 54%;            /* #ea2a33 */
+    --cinema-red-hover: 357 71% 48%;
+    --cinema-dark: 12 25% 9%;             /* #181111 */
+    --cinema-brown: 12 25% 19%;           /* #382929 */
+    --cinema-border: 12 25% 32%;          /* #533c3d */
+    
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--cinema-dark)) 0%, hsl(var(--cinema-brown)) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(var(--cinema-brown)) 0%, hsl(var(--cinema-dark)) 100%);
+    --gradient-red: linear-gradient(135deg, hsl(var(--cinema-red)) 0%, hsl(var(--cinema-red-hover)) 100%);
+    
+    /* Shadows */
+    --shadow-card: 0 8px 32px -8px hsl(var(--cinema-dark) / 0.8);
+    --shadow-button: 0 4px 16px -4px hsl(var(--cinema-red) / 0.4);
+    --shadow-glow: 0 0 32px hsl(var(--cinema-red) / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-quick: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
 
@@ -55,42 +81,9 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Dark theme is default for cinema experience */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Same as root - this is our default dark cinema theme */
   }
 }
 
@@ -100,6 +93,87 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-jakarta;
   }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Cinema Button Variants */
+  .btn-cinema {
+    @apply bg-gradient-to-r from-cinema-red to-cinema-red-hover text-white font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 hover:shadow-[var(--shadow-button)] hover:scale-105;
+    @apply focus:outline-none focus:ring-2 focus:ring-cinema-red/50;
+  }
+  
+  .btn-cinema-outline {
+    @apply border-2 border-cinema-red text-cinema-red font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 hover:bg-cinema-red hover:text-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-cinema-red/50;
+  }
+  
+  /* Movie Card Styles */
+  .movie-card {
+    @apply bg-card rounded-xl overflow-hidden transition-transform duration-300;
+    @apply hover:scale-105 hover:shadow-[var(--shadow-card)];
+    @apply border border-border;
+  }
+  
+  /* Input Styles */
+  .input-cinema {
+    @apply bg-input text-foreground border border-border rounded-lg px-4 py-3;
+    @apply focus:outline-none focus:ring-2 focus:ring-cinema-red/50 focus:border-cinema-red;
+    @apply placeholder:text-muted-foreground;
+  }
+  
+  /* Seat Selection Styles */
+  .seat {
+    @apply w-8 h-8 rounded-t-lg border-2 transition-all duration-200 cursor-pointer;
+  }
+  
+  .seat-available {
+    @apply bg-muted border-border hover:bg-cinema-red/20 hover:border-cinema-red;
+  }
+  
+  .seat-selected {
+    @apply bg-cinema-red border-cinema-red text-white;
+  }
+  
+  .seat-booked {
+    @apply bg-destructive border-destructive cursor-not-allowed opacity-60;
+  }
+}
+
+/* Custom Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200px 100%;
 }
