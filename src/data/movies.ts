@@ -17,6 +17,7 @@ export interface Movie {
   };
   status: 'now-showing' | 'coming-soon';
   featured?: boolean;
+  releaseDate?: string;
 }
 
 export const movies: Movie[] = [

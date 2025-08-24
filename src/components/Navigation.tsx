@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, X, Film } from 'lucide-react';
+import { Search, Menu, X, Film, Settings } from 'lucide-react';
+import MovieCountdown from './MovieCountdown';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,6 +13,9 @@ const Navigation = () => {
     { name: 'Showtimes', href: '/movies' },
     { name: 'Login', href: '/auth' },
   ];
+
+  // Mock admin check - in real app this would come from auth context
+  const isAdmin = true;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -42,10 +46,24 @@ const Navigation = () => {
                 {item.name}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`text-sm font-medium transition-colors hover:text-cinema-red flex items-center space-x-1 ${
+                  isActive('/admin')
+                    ? 'text-cinema-red'
+                    : 'text-foreground-secondary'
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+                <span>Admin</span>
+              </Link>
+            )}
           </nav>
 
-          {/* Search Bar */}
-          <div className="hidden lg:flex items-center">
+          {/* Movie Countdown & Search */}
+          <div className="hidden lg:flex items-center space-x-4">
+            <MovieCountdown />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
@@ -85,6 +103,22 @@ const Navigation = () => {
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Mobile Admin Link */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-cinema-red flex items-center space-x-2 ${
+                    isActive('/admin')
+                      ? 'text-cinema-red bg-cinema-red/10'
+                      : 'text-foreground-secondary'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Admin</span>
+                </Link>
+              )}
               
               {/* Mobile Search */}
               <div className="px-3 py-2">
