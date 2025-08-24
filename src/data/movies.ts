@@ -110,7 +110,24 @@ export const movies: Movie[] = [
     cast: ["Tom Holland", "Zendaya", "Benedict Cumberbatch", "Jacob Batalon"],
     showtimes: ["12:30 PM", "3:45 PM", "7:00 PM", "10:15 PM"],
     pricing: { regular: 12, premium: 18, vip: 25 },
-    status: "coming-soon"
+    status: "coming-soon",
+    releaseDate: "2024-12-25"
+  },
+  {
+    id: 7,
+    title: "Avengers: Secret Wars",
+    genre: ["Action", "Adventure", "Sci-Fi"],
+    rating: "PG-13",
+    duration: "160 min",
+    releaseYear: "2025",
+    poster: "src/assets/posters/dune.jpg",
+    synopsis: "The Avengers face their biggest challenge yet as multiple universes collide in an epic battle for the fate of reality itself.",
+    director: "Russo Brothers",
+    cast: ["Robert Downey Jr.", "Chris Evans", "Scarlett Johansson", "Mark Ruffalo"],
+    showtimes: ["2:00 PM", "5:30 PM", "8:45 PM"],
+    pricing: { regular: 15, premium: 22, vip: 30 },
+    status: "coming-soon",
+    releaseDate: "2025-01-15"
   }
 ];
 

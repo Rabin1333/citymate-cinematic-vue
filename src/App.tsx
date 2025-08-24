@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Movies from "./pages/Movies";
+import Showtimes from "./pages/Showtimes";
 import MovieDetails from "./pages/MovieDetails";
 import SeatSelection from "./pages/SeatSelection";
 import Payment from "./pages/Payment";
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/" element={<Layout />}>
             <Route index element={<Index />} />
             <Route path="movies" element={<Movies />} />
+            <Route path="showtimes" element={<Showtimes />} />
             <Route path="movie/:id" element={<MovieDetails />} />
             <Route path="seats/:id" element={<SeatSelection />} />
             <Route path="payment/:id" element={<Payment />} />
