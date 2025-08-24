@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Search, Menu, X, Film, Settings } from 'lucide-react';
 import MovieCountdown from './MovieCountdown';
+import MovieCountdownDropdown from './MovieCountdownDropdown';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,9 +62,10 @@ const Navigation = () => {
             )}
           </nav>
 
-          {/* Movie Countdown & Search */}
+          {/* Movie Countdown, Timer & Search */}
           <div className="hidden lg:flex items-center space-x-4">
             <MovieCountdown />
+            <MovieCountdownDropdown />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
@@ -120,8 +122,11 @@ const Navigation = () => {
                 </Link>
               )}
               
-              {/* Mobile Search */}
-              <div className="px-3 py-2">
+              {/* Mobile Timer & Search */}
+              <div className="px-3 py-2 space-y-3">
+                <div className="flex items-center justify-center">
+                  <MovieCountdownDropdown />
+                </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <input
