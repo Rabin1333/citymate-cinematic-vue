@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2, Upload, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Save, X, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { movies as initialMovies, Movie } from '@/data/movies';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Admin = () => {
   const [movies, setMovies] = useState<Movie[]>(initialMovies);
