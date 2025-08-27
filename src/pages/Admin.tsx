@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2, Upload, Save, X, BarChart3 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Save, X, BarChart3, Users, Monitor, TrendingUp, MessageSquare, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { movies as initialMovies, Movie } from '@/data/movies';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { DashboardOverview } from '@/components/admin/DashboardOverview';
 
 const Admin = () => {
   const [movies, setMovies] = useState<Movie[]>(initialMovies);
@@ -110,15 +112,82 @@ const Admin = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="btn-cinema flex items-center space-x-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add Movie</span>
-          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage your cinema operations and analytics</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/admin/analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </Link>
+            </Button>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="btn-cinema flex items-center space-x-2"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Add Movie</span>
+            </button>
+          </div>
         </div>
+
+        {/* Quick Navigation Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin/theater-management">
+              <CardContent className="p-6 text-center">
+                <Monitor className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Theater Management</h3>
+                <p className="text-sm text-muted-foreground">Screens & Seats</p>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin/user-management">
+              <CardContent className="p-6 text-center">
+                <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">User Management</h3>
+                <p className="text-sm text-muted-foreground">Customers & Staff</p>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin/analytics">
+              <CardContent className="p-6 text-center">
+                <TrendingUp className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Sales Analytics</h3>
+                <p className="text-sm text-muted-foreground">Reports & Insights</p>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin/marketing">
+              <CardContent className="p-6 text-center">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Marketing</h3>
+                <p className="text-sm text-muted-foreground">Promotions & Campaigns</p>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin/reports">
+              <CardContent className="p-6 text-center">
+                <Building className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Reports</h3>
+                <p className="text-sm text-muted-foreground">Custom Analytics</p>
+              </CardContent>
+            </Link>
+          </Card>
+        </div>
+
+        {/* Dashboard Overview */}
+        <DashboardOverview />
 
         {/* Add/Edit Form */}
         {showAddForm && (

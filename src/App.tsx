@@ -14,6 +14,10 @@ import Confirmation from "./pages/Confirmation";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Analytics from "./pages/Analytics";
+import TheaterManagement from "./pages/TheaterManagement";
+import UserManagement from "./pages/UserManagement";
+import MarketingDashboard from "./pages/MarketingDashboard";
+import ReportsAnalytics from "./pages/ReportsAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +40,10 @@ const App = () => (
             <Route path="auth" element={<Auth />} />
             <Route path="admin" element={<Admin />} />
             <Route path="admin/analytics" element={<Analytics />} />
+            <Route path="admin/theater-management" element={<TheaterManagement />} />
+            <Route path="admin/user-management" element={<UserManagement />} />
+            <Route path="admin/marketing" element={<MarketingDashboard />} />
+            <Route path="admin/reports" element={<ReportsAnalytics />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>
