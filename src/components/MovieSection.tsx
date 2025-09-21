@@ -1,11 +1,16 @@
-import { ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import MovieCard from './MovieCard';
-import type { Movie } from '../data/movies';
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import MovieCard from "./MovieCard";
+
+// Support both mock and API movie shapes
+import type { Movie as MockMovie } from "../data/movies";
+import type { UiMovie } from "../services/api";
+
+type MovieLike = (UiMovie | MockMovie) & { id: string | number };
 
 interface MovieSectionProps {
   title: string;
-  movies: Movie[];
+  movies: MovieLike[];
   viewAllLink?: string;
 }
 
@@ -25,11 +30,11 @@ const MovieSection = ({ title, movies, viewAllLink }: MovieSectionProps) => {
             </Link>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {movies.map((movie, index) => (
             <div
-              key={movie.id}
+              key={String(movie.id)} // works for string or number
               className="animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
@@ -37,10 +42,12 @@ const MovieSection = ({ title, movies, viewAllLink }: MovieSectionProps) => {
             </div>
           ))}
         </div>
-        
+
         {movies.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-foreground-secondary text-lg">No movies available at the moment.</p>
+            <p className="text-foreground-secondary text-lg">
+              No movies available at the moment.
+            </p>
           </div>
         )}
       </div>

@@ -1,49 +1,67 @@
-import { useState, useMemo } from 'react';
-import { Search, Filter } from 'lucide-react';
-import MovieCard from '../components/MovieCard';
-import { movies } from '../data/movies';
+import { useState, useMemo, useEffect } from "react";
+import { Search, Filter } from "lucide-react";
+import MovieCard from "../components/MovieCard";
+import { getMovies, type UiMovie } from "../services/api"; // <-- live API
 
 const Movies = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<string>("All");
+  const [movies, setMovies] = useState<UiMovie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Get all unique genres
-  const genres = useMemo(() => {
-    const allGenres = movies.flatMap(movie => movie.genre);
-    return ['All', ...Array.from(new Set(allGenres))];
+  // fetch from backend
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getMovies(false); // all movies
+        setMovies(data);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load movies");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  // Filter movies based on search and genre
+  // genres from live data
+  const genres = useMemo(() => {
+    const all = movies.flatMap((m) => m.genre || []);
+    return ["All", ...Array.from(new Set(all))];
+  }, [movies]);
+
+  // filter by search + genre
   const filteredMovies = useMemo(() => {
-    return movies.filter(movie => {
-      const matchesSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           movie.director.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           movie.cast.some(actor => actor.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesGenre = selectedGenre === 'All' || movie.genre.includes(selectedGenre);
-      
+    const term = searchTerm.toLowerCase();
+    return movies.filter((m) => {
+      const matchesSearch =
+        m.title.toLowerCase().includes(term) ||
+        (m.director || "").toLowerCase().includes(term) ||
+        (m.cast || []).some((a) => a.toLowerCase().includes(term));
+
+      const matchesGenre = selectedGenre === "All" || m.genre.includes(selectedGenre);
       return matchesSearch && matchesGenre;
     });
-  }, [searchTerm, selectedGenre]);
+  }, [movies, searchTerm, selectedGenre]);
+
+  if (loading) return <div className="min-h-screen py-16 text-center">Loading movies…</div>;
+  if (error)   return <div className="min-h-screen py-16 text-center text-red-500">{error}</div>;
 
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            All Movies
-          </h1>
+          <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">All Movies</h1>
           <p className="text-lg text-foreground-secondary max-w-2xl mx-auto">
             Discover your next favorite movie from our extensive collection
           </p>
         </div>
 
-        {/* Search and Filter Section */}
+        {/* Search & Filters */}
         <div className="mb-8 space-y-6">
-          {/* Search Bar */}
           <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <input
               type="text"
               placeholder="Search movies, directors, or actors..."
@@ -53,14 +71,13 @@ const Movies = () => {
             />
           </div>
 
-          {/* Genre Filter */}
           <div className="flex items-center justify-center">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="h-5 w-5 text-foreground-secondary" />
               <span className="text-foreground-secondary font-medium">Filter by Genre:</span>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap justify-center gap-2">
             {genres.map((genre) => (
               <button
@@ -68,8 +85,8 @@ const Movies = () => {
                 onClick={() => setSelectedGenre(genre)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                   selectedGenre === genre
-                    ? 'bg-cinema-red text-white shadow-button'
-                    : 'bg-card text-foreground-secondary hover:bg-cinema-red/20 hover:text-cinema-red border border-border'
+                    ? "bg-cinema-red text-white shadow-button"
+                    : "bg-card text-foreground-secondary hover:bg-cinema-red/20 hover:text-cinema-red border border-border"
                 }`}
               >
                 {genre}
@@ -78,20 +95,20 @@ const Movies = () => {
           </div>
         </div>
 
-        {/* Results Count */}
+        {/* Results */}
         <div className="mb-6">
           <p className="text-foreground-secondary">
             Showing {filteredMovies.length} of {movies.length} movies
-            {selectedGenre !== 'All' && ` in ${selectedGenre}`}
+            {selectedGenre !== "All" && ` in ${selectedGenre}`}
             {searchTerm && ` matching "${searchTerm}"`}
           </p>
         </div>
 
-        {/* Movies Grid */}
+        {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredMovies.map((movie, index) => (
             <div
-              key={movie.id}
+              key={movie.id} // <-- UiMovie.id (string from Mongo _id)
               className="animate-fade-in-up"
               style={{ animationDelay: `${index * 50}ms` }}
             >
@@ -111,8 +128,8 @@ const Movies = () => {
               </p>
               <button
                 onClick={() => {
-                  setSearchTerm('');
-                  setSelectedGenre('All');
+                  setSearchTerm("");
+                  setSelectedGenre("All");
                 }}
                 className="btn-cinema-outline"
               >

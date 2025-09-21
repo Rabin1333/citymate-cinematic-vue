@@ -1,29 +1,80 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { Calendar, Clock, MapPin, Star, Play } from 'lucide-react';
-import { movies } from '../data/movies';
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar, Clock, MapPin, Star, Play } from "lucide-react";
+import { getMovies, getShowtimes, type UiMovie } from "../services/api";
 
 const MovieDetails = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState('Today');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [selectedCinema, setSelectedCinema] = useState('Downtown Cinema');
 
-  const movie = movies.find(m => m.id === parseInt(id || '0'));
-  
-  if (!movie) {
-    return <div>Movie not found</div>;
-  }
+  const [movie, setMovie] = useState<UiMovie | null>(null);
+  const [times, setTimes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const dates = ['Today', 'Tomorrow', 'Dec 20'];
-  const cinemas = ['Downtown Cinema', 'Mall Cinema', 'IMAX Theater'];
+  const [selectedDate, setSelectedDate] = useState("Today");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedCinema, setSelectedCinema] = useState("Downtown Cinema");
+
+  // simple static UI choices (unchanged)
+  const dates = useMemo(() => ["Today", "Tomorrow", "Dec 20"], []);
+  const cinemas = useMemo(
+    () => ["Downtown Cinema", "Mall Cinema", "IMAX Theater"],
+    []
+  );
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      try {
+        // 1) load all movies, then find one by id
+        const all = await getMovies(false);
+        const found = all.find((m) => String(m.id) === String(id)) || null;
+        setMovie(found);
+
+        // 2) fetch showtimes from API (fallback to movie's local showtimes if needed)
+        try {
+          const st = await getShowtimes(String(id));
+          const arr = Array.isArray(st?.showtimes) ? st.showtimes : [];
+          setTimes(arr.length > 0 ? arr : found?.showtimes || []);
+        } catch {
+          setTimes(found?.showtimes || []);
+        }
+      } catch (e: any) {
+        setError(e?.message || "Failed to load movie");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
 
   const handleBooking = () => {
-    if (selectedTime) {
-      navigate(`/seats/${movie.id}?date=${selectedDate}&time=${selectedTime}&cinema=${selectedCinema}`);
+    if (movie && selectedTime) {
+      navigate(
+        `/seats/${movie.id}?date=${encodeURIComponent(
+          selectedDate
+        )}&time=${encodeURIComponent(
+          selectedTime
+        )}&cinema=${encodeURIComponent(selectedCinema)}`
+      );
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen py-16 text-center">
+        Loading movie…
+      </div>
+    );
+  }
+
+  if (error || !movie) {
+    return (
+      <div className="min-h-screen py-16 text-center text-red-500">
+        {error || "Movie not found"}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8">
@@ -32,8 +83,8 @@ const MovieDetails = () => {
           {/* Movie Poster */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
-              <img 
-                src={movie.poster} 
+              <img
+                src={movie.poster}
                 alt={movie.title}
                 className="w-full rounded-2xl shadow-cinematic"
               />
@@ -64,8 +115,11 @@ const MovieDetails = () => {
               </h1>
 
               <div className="flex flex-wrap gap-2 mb-6">
-                {movie.genre.map((genre) => (
-                  <span key={genre} className="bg-card text-foreground-secondary px-3 py-1 rounded-full text-sm border border-border">
+                {(movie.genre || []).map((genre) => (
+                  <span
+                    key={genre}
+                    className="bg-card text-foreground-secondary px-3 py-1 rounded-full text-sm border border-border"
+                  >
                     {genre}
                   </span>
                 ))}
@@ -82,7 +136,9 @@ const MovieDetails = () => {
                 </div>
                 <div>
                   <h3 className="text-foreground font-semibold mb-2">Cast</h3>
-                  <p className="text-foreground-secondary">{movie.cast.join(', ')}</p>
+                  <p className="text-foreground-secondary">
+                    {(movie.cast || []).join(", ")}
+                  </p>
                 </div>
               </div>
             </div>
@@ -90,7 +146,7 @@ const MovieDetails = () => {
             {/* Booking Section */}
             <div className="bg-card rounded-2xl p-6 border border-border">
               <h2 className="text-2xl font-bold text-foreground mb-6">Book Tickets</h2>
-              
+
               {/* Date Selection */}
               <div className="mb-6">
                 <label className="flex items-center gap-2 text-foreground font-medium mb-3">
@@ -104,8 +160,8 @@ const MovieDetails = () => {
                       onClick={() => setSelectedDate(date)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         selectedDate === date
-                          ? 'bg-cinema-red text-white'
-                          : 'bg-background text-foreground-secondary hover:bg-cinema-red/20'
+                          ? "bg-cinema-red text-white"
+                          : "bg-background text-foreground-secondary hover:bg-cinema-red/20"
                       }`}
                     >
                       {date}
@@ -120,13 +176,15 @@ const MovieDetails = () => {
                   <MapPin className="w-5 h-5" />
                   Select Cinema
                 </label>
-                <select 
+                <select
                   value={selectedCinema}
                   onChange={(e) => setSelectedCinema(e.target.value)}
                   className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground"
                 >
                   {cinemas.map((cinema) => (
-                    <option key={cinema} value={cinema}>{cinema}</option>
+                    <option key={cinema} value={cinema}>
+                      {cinema}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -138,14 +196,14 @@ const MovieDetails = () => {
                   Select Showtime
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {movie.showtimes.map((time) => (
+                  {times.map((time) => (
                     <button
                       key={time}
                       onClick={() => setSelectedTime(time)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         selectedTime === time
-                          ? 'bg-cinema-red text-white'
-                          : 'bg-background text-foreground-secondary hover:bg-cinema-red/20 border border-border'
+                          ? "bg-cinema-red text-white"
+                          : "bg-background text-foreground-secondary hover:bg-cinema-red/20 border border-border"
                       }`}
                     >
                       {time}
@@ -160,20 +218,26 @@ const MovieDetails = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
                     <div className="text-foreground-secondary text-sm">Regular</div>
-                    <div className="text-foreground font-semibold">${movie.pricing.regular}</div>
+                    <div className="text-foreground font-semibold">
+                      ${movie.pricing.regular}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-foreground-secondary text-sm">Premium</div>
-                    <div className="text-foreground font-semibold">${movie.pricing.premium}</div>
+                    <div className="text-foreground font-semibold">
+                      ${movie.pricing.premium}
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="text-foreground-secondary text-sm">VIP</div>
-                    <div className="text-foreground font-semibold">${movie.pricing.vip}</div>
+                    <div className="text-foreground font-semibold">
+                      ${movie.pricing.vip}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleBooking}
                 disabled={!selectedTime}
                 className="w-full btn-cinema disabled:opacity-50 disabled:cursor-not-allowed"

@@ -1,133 +1,173 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Monitor } from 'lucide-react';
-import { movies } from '../data/movies';
+// src/pages/SeatSelection.tsx
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Monitor } from "lucide-react";
+import { getMovies, createBooking } from "../services/api"; // <-- API calls
+import type { UiMovie } from "../services/api";
+
+type SeatType = "regular" | "premium" | "vip";
+type SeatStatus = "available" | "selected" | "booked";
 
 interface Seat {
   id: string;
   row: string;
   number: number;
-  type: 'regular' | 'premium' | 'vip';
-  status: 'available' | 'selected' | 'booked';
+  type: SeatType;
+  status: SeatStatus;
   price: number;
 }
 
 const SeatSelection = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // movie id (string)
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const [movie, setMovie] = useState<UiMovie | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
+  const date = searchParams.get("date") ?? "Today";
+  const time = searchParams.get("time") ?? "";
+  const cinema = searchParams.get("cinema") ?? "Downtown Cinema";
 
-  const movie = movies.find(m => m.id === parseInt(id || '0'));
-  const date = searchParams.get('date');
-  const time = searchParams.get('time');
-  const cinema = searchParams.get('cinema');
+  // --- Load movie from API ---
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const all = await getMovies(false); // all movies
+        const m = all.find((x) => x.id === id);
+        if (alive) setMovie(m ?? null);
+      } catch (e) {
+        console.error("Failed to load movie", e);
+        if (alive) setMovie(null);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id]);
 
-  // Generate seat map
-  const generateSeats = (): Seat[] => {
-    const seats: Seat[] = [];
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-    
+  // --- Generate seat map once we know pricing ---
+  const seats = useMemo<Seat[]>(() => {
+    if (!movie) return [];
+    const rows = ["A", "B", "C", "D", "E", "F", "G", "H"];
+    const out: Seat[] = [];
+
     rows.forEach((row, rowIndex) => {
       const seatsPerRow = 12;
       for (let i = 1; i <= seatsPerRow; i++) {
-        let type: 'regular' | 'premium' | 'vip' = 'regular';
-        let price = movie?.pricing.regular || 12;
-        
-        // VIP seats (front rows)
+        let type: SeatType = "regular";
+        let price = movie.pricing.regular;
+
         if (rowIndex <= 1) {
-          type = 'vip';
-          price = movie?.pricing.vip || 25;
-        }
-        // Premium seats (middle rows)
-        else if (rowIndex <= 4) {
-          type = 'premium';
-          price = movie?.pricing.premium || 18;
+          type = "vip";
+          price = movie.pricing.vip;
+        } else if (rowIndex <= 4) {
+          type = "premium";
+          price = movie.pricing.premium;
         }
 
-        // Randomly book some seats for demo
+        // simple demo: randomly mark some seats booked
         const isBooked = Math.random() < 0.15;
-        
-        seats.push({
+
+        out.push({
           id: `${row}${i}`,
           row,
           number: i,
           type,
-          status: isBooked ? 'booked' : 'available',
-          price
+          status: isBooked ? "booked" : "available",
+          price,
         });
       }
     });
-    
-    return seats;
-  };
 
-  const [seats] = useState<Seat[]>(generateSeats());
+    return out;
+  }, [movie]);
 
-  const handleSeatClick = (clickedSeat: Seat) => {
-    if (clickedSeat.status === 'booked') return;
-    
-    setSelectedSeats(prev => {
-      const isSelected = prev.some(seat => seat.id === clickedSeat.id);
-      if (isSelected) {
-        return prev.filter(seat => seat.id !== clickedSeat.id);
-      } else {
-        return [...prev, clickedSeat];
-      }
-    });
+  const handleSeatClick = (clicked: Seat) => {
+    if (clicked.status === "booked") return;
+    setSelectedSeats((prev) =>
+      prev.some((s) => s.id === clicked.id)
+        ? prev.filter((s) => s.id !== clicked.id)
+        : [...prev, clicked]
+    );
   };
 
   const getSeatClassName = (seat: Seat) => {
-    const isSelected = selectedSeats.some(s => s.id === seat.id);
-    const baseClass = "w-8 h-8 rounded-t-lg border-2 cursor-pointer transition-all duration-200 text-xs font-medium flex items-center justify-center";
-    
-    if (seat.status === 'booked') {
-      return `${baseClass} bg-red-500 border-red-600 cursor-not-allowed text-white`;
-    }
-    
-    if (isSelected) {
-      return `${baseClass} bg-cinema-red border-cinema-red text-white scale-110`;
-    }
-    
-    // Type-based styling
+    const isSelected = selectedSeats.some((s) => s.id === seat.id);
+    const base =
+      "w-8 h-8 rounded-t-lg border-2 cursor-pointer transition-all duration-200 text-xs font-medium flex items-center justify-center";
+
+    if (seat.status === "booked") return `${base} bg-red-500 border-red-600 cursor-not-allowed text-white`;
+    if (isSelected) return `${base} bg-cinema-red border-cinema-red text-white scale-110`;
+
     switch (seat.type) {
-      case 'vip':
-        return `${baseClass} bg-amber-100 border-amber-300 hover:bg-amber-200 text-amber-800`;
-      case 'premium':
-        return `${baseClass} bg-blue-100 border-blue-300 hover:bg-blue-200 text-blue-800`;
+      case "vip":
+        return `${base} bg-amber-100 border-amber-300 hover:bg-amber-200 text-amber-800`;
+      case "premium":
+        return `${base} bg-blue-100 border-blue-300 hover:bg-blue-200 text-blue-800`;
       default:
-        return `${baseClass} bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-800`;
+        return `${base} bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-800`;
     }
   };
 
-  const totalPrice = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+  const totalPrice = selectedSeats.reduce((sum, s) => sum + s.price, 0);
 
-  const handleProceedToPayment = () => {
-    if (selectedSeats.length > 0) {
-      const seatIds = selectedSeats.map(s => s.id).join(',');
-      navigate(`/payment/${id}?seats=${seatIds}&date=${date}&time=${time}&cinema=${cinema}&total=${totalPrice}`);
+  // --- Step 6: Create booking via API ---
+  const handleProceedToPayment = async () => {
+    if (!movie) return;
+    if (!time) {
+      alert("Please choose a showtime first.");
+      return;
+    }
+    if (selectedSeats.length === 0) return;
+
+    // token saved on login (Local Storage)
+    const token = localStorage.getItem("token")?.replace(/^"+|"+$/g, "");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const seatIds = selectedSeats.map((s) => s.id);
+      
+      // Create the payload object that matches CreateBookingBody interface
+      const payload = {
+        movieId: movie.id,
+        showtime: time,
+        seats: seatIds,
+        cinema: cinema // optional field
+      };
+      
+      // Call createBooking with the correct signature
+      await createBooking(token, payload);
+      
+      // Navigate to payment page
+      navigate(`/payment/${movie.id}?seats=${seatIds.join(",")}&date=${date}&time=${time}&cinema=${cinema}&total=${totalPrice}`);
+    } catch (err) {
+      console.error(err);
+      alert("Booking failed. Please try again.");
     }
   };
 
-  if (!movie) {
-    return <div>Movie not found</div>;
-  }
+  if (loading) return <div className="p-8">Loading…</div>;
+  if (!movie) return <div className="p-8">Movie not found</div>;
 
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <button 
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-card rounded-lg transition-colors"
-          >
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-card rounded-lg transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Select Seats</h1>
             <p className="text-foreground-secondary">
-              {movie.title} • {cinema} • {date} • {time}
+              {movie.title} • {cinema} • {date} • {time || "Select time"}
             </p>
           </div>
         </div>
@@ -170,16 +210,14 @@ const SeatSelection = () => {
 
               {/* Seats */}
               <div className="space-y-4">
-                {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((row) => (
+                {["A", "B", "C", "D", "E", "F", "G", "H"].map((row) => (
                   <div key={row} className="flex items-center justify-center gap-2">
-                    <div className="w-8 text-center text-foreground-secondary font-medium">
-                      {row}
-                    </div>
+                    <div className="w-8 text-center text-foreground-secondary font-medium">{row}</div>
                     <div className="flex gap-1">
                       {seats
-                        .filter(seat => seat.row === row)
+                        .filter((s) => s.row === row)
                         .slice(0, 6)
-                        .map(seat => (
+                        .map((seat) => (
                           <button
                             key={seat.id}
                             onClick={() => handleSeatClick(seat)}
@@ -193,9 +231,9 @@ const SeatSelection = () => {
                     <div className="w-8"></div>
                     <div className="flex gap-1">
                       {seats
-                        .filter(seat => seat.row === row)
+                        .filter((s) => s.row === row)
                         .slice(6, 12)
-                        .map(seat => (
+                        .map((seat) => (
                           <button
                             key={seat.id}
                             onClick={() => handleSeatClick(seat)}
@@ -206,9 +244,7 @@ const SeatSelection = () => {
                           </button>
                         ))}
                     </div>
-                    <div className="w-8 text-center text-foreground-secondary font-medium">
-                      {row}
-                    </div>
+                    <div className="w-8 text-center text-foreground-secondary font-medium">{row}</div>
                   </div>
                 ))}
               </div>
@@ -220,7 +256,7 @@ const SeatSelection = () => {
             <div className="sticky top-8">
               <div className="bg-card rounded-2xl p-6 border border-border">
                 <h3 className="text-xl font-bold text-foreground mb-4">Booking Summary</h3>
-                
+
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-foreground-secondary">Movie</span>
@@ -236,7 +272,7 @@ const SeatSelection = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-foreground-secondary">Time</span>
-                    <span className="text-foreground">{time}</span>
+                    <span className="text-foreground">{time || "-"}</span>
                   </div>
                 </div>
 
@@ -245,7 +281,7 @@ const SeatSelection = () => {
                     <div className="border-t border-border pt-4 mb-4">
                       <h4 className="font-medium text-foreground mb-2">Selected Seats</h4>
                       <div className="space-y-2">
-                        {selectedSeats.map(seat => (
+                        {selectedSeats.map((seat) => (
                           <div key={seat.id} className="flex justify-between text-sm">
                             <span className="text-foreground-secondary">
                               {seat.id} ({seat.type})
@@ -255,7 +291,7 @@ const SeatSelection = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className="border-t border-border pt-4 mb-6">
                       <div className="flex justify-between font-bold text-lg">
                         <span className="text-foreground">Total</span>
@@ -270,7 +306,7 @@ const SeatSelection = () => {
                   disabled={selectedSeats.length === 0}
                   className="w-full btn-cinema disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {selectedSeats.length === 0 ? 'Select Seats' : 'Proceed to Payment'}
+                  {selectedSeats.length === 0 ? "Select Seats" : "Proceed to Payment"}
                 </button>
               </div>
             </div>
