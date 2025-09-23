@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin, Star, Play } from "lucide-react";
 import { getMovieById, getShowtimes, type UiMovie } from "../services/api";
+import { MovieReviewsSection } from "@/components/MovieReviewsSection";
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -245,6 +246,15 @@ const MovieDetails = () => {
               </button>
             </div>
           </div>
+        </div>
+        
+        {/* Reviews Section */}
+        <div className="mt-8">
+          <MovieReviewsSection 
+            movieId={movie.id} 
+            avgRating={(movie as any).avgRating || 0}
+            reviewCount={(movie as any).reviewCount || 0}
+          />
         </div>
       </div>
     </div>

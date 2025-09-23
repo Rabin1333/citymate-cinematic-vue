@@ -705,3 +705,115 @@ export async function getMyRewards(status?: 'issued' | 'claimed' | 'expired'): P
   if (!res.ok) throw new Error(`Failed to fetch user rewards (${res.status})`);
   return res.json();
 }
+
+// Reviews
+export interface Review {
+  _id: string;
+  userId: { _id: string; name: string };
+  movieId: { _id: string; title: string };
+  bookingId?: string;
+  rating: number;
+  comment: string;
+  status: "published" | "flagged" | "removed";
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function createReview(movieId: string, bookingId: string | null, rating: number, comment: string): Promise<{ message: string; review: Review }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/reviews`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ movieId, bookingId, rating, comment })
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to create review");
+  }
+
+  return res.json();
+}
+
+export async function updateReview(reviewId: string, rating: number, comment: string): Promise<{ message: string; review: Review }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/reviews/${reviewId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ rating, comment })
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to update review");
+  }
+
+  return res.json();
+}
+
+export async function deleteReview(reviewId: string): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/reviews/${reviewId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to delete review");
+  }
+
+  return res.json();
+}
+
+export async function getMovieReviews(movieId: string, page = 1, pageSize = 10, sort = "recent"): Promise<{ reviews: Review[]; pagination: any }> {
+  const url = new URL(`${BASE}/api/reviews`);
+  url.searchParams.append("movieId", movieId);
+  url.searchParams.append("page", page.toString());
+  url.searchParams.append("pageSize", pageSize.toString());
+  url.searchParams.append("sort", sort);
+
+  const res = await fetch(url.toString());
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch movie reviews");
+  }
+
+  return res.json();
+}
+
+export async function getUserReviews(page = 1, pageSize = 10): Promise<{ reviews: Review[]; pagination: any }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const url = new URL(`${BASE}/api/reviews/my`);
+  url.searchParams.append("page", page.toString());
+  url.searchParams.append("pageSize", pageSize.toString());
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch user reviews");
+  }
+
+  return res.json();
+}

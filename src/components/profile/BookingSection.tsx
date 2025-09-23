@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, MapPin, Users, Download, Mail, X, Edit, Loader2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Download, Mail, X, Edit, Loader2, Star } from "lucide-react";
+import { ReviewModal } from "@/components/ReviewModal";
 import { format } from "date-fns";
 import { 
   getUserBookings, 
@@ -20,6 +21,8 @@ export const BookingSection = () => {
   const [bookings, setBookings] = useState<UiBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<UiBooking | null>(null);
 
   // Load user's real bookings
   useEffect(() => {
@@ -64,6 +67,11 @@ export const BookingSection = () => {
     } finally {
       setActionLoading(prev => ({ ...prev, [`cancel-${bookingId}`]: false }));
     }
+  };
+
+  const handleRateReview = (booking: UiBooking) => {
+    setSelectedBooking(booking);
+    setIsReviewModalOpen(true);
   };
 
   const handleDownloadTicket = async (bookingId: string) => {
@@ -331,28 +339,59 @@ export const BookingSection = () => {
                       </div>
                       
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDownloadTicket(booking._id)}
-                          disabled={actionLoading[`download-${booking._id}`]}
-                        >
-                          {actionLoading[`download-${booking._id}`] ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Download className="mr-2 h-4 w-4" />
-                          )}
-                          Download
-                        </Button>
+                         <Button 
+                           size="sm" 
+                           variant="outline"
+                           onClick={() => handleDownloadTicket(booking._id)}
+                           disabled={actionLoading[`download-${booking._id}`]}
+                         >
+                           {actionLoading[`download-${booking._id}`] ? (
+                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                           ) : (
+                             <Download className="mr-2 h-4 w-4" />
+                           )}
+                           Download
+                         </Button>
+                         
+                         {new Date(booking.showtime) < new Date() && (
+                           <Button 
+                             size="sm" 
+                             variant="outline"
+                             onClick={() => handleRateReview(booking)}
+                           >
+                             <Star className="mr-2 h-4 w-4" />
+                             Rate & Review
+                           </Button>
+                         )}
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-};
+               ))}
+             </div>
+           </CardContent>
+         </Card>
+       )}
+       
+       {selectedBooking && (
+         <ReviewModal
+           isOpen={isReviewModalOpen}
+           onClose={() => {
+             setIsReviewModalOpen(false);
+             setSelectedBooking(null);
+           }}
+           movieId={selectedBooking.movieId}
+           bookingId={selectedBooking._id}
+           onReviewSubmitted={() => {
+             toast({
+               title: "Review Submitted",
+               description: "Thank you for your review!"
+             });
+             setIsReviewModalOpen(false);
+             setSelectedBooking(null);
+           }}
+         />
+       )}
+     </div>
+   );
+ };

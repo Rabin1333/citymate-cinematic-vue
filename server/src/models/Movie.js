@@ -20,7 +20,9 @@ const MovieSchema = new mongoose.Schema({
   status: { type: String, enum: ["now-showing", "coming-soon"], default: "now-showing" },
   featured: Boolean,
   // stored as ISO string in seed to match your UI; we'll parse it when filtering
-  releaseDate: String
+  releaseDate: String,
+  avgRating: { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Movie", MovieSchema);
