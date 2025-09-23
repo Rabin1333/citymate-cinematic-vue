@@ -3,7 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingSection } from "@/components/profile/BookingSection";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { SettingsSection } from "@/components/profile/SettingsSection";
-import { User, BookOpen, Settings } from "lucide-react";
+import MyRewards from "./MyRewards";
+import { User, BookOpen, Settings, Gift } from "lucide-react";
 
 const UserProfile = () => {
   return (
@@ -15,7 +16,7 @@ const UserProfile = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profile
@@ -23,6 +24,10 @@ const UserProfile = () => {
             <TabsTrigger value="bookings" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Bookings
+            </TabsTrigger>
+            <TabsTrigger value="rewards" className="flex items-center gap-2">
+              <Gift className="h-4 w-4" />
+              Rewards
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -36,6 +41,10 @@ const UserProfile = () => {
 
           <TabsContent value="bookings" className="mt-6">
             <BookingSection />
+          </TabsContent>
+
+          <TabsContent value="rewards" className="mt-6">
+            <MyRewards />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">

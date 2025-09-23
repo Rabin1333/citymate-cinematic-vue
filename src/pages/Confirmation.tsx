@@ -1,8 +1,8 @@
 // src/pages/Confirmation.tsx - FUNCTIONAL VERSION
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CheckCircle, Download, Mail, Calendar, QrCode, Home, Loader2 } from 'lucide-react';
-import { getBookingById } from '@/services/api';
+import { CheckCircle, Download, Mail, Calendar, QrCode, Home, Loader2, Gift, Sparkles, Trophy } from 'lucide-react';
+import { getBookingById, getRewardByBookingId, Reward } from '@/services/api';
 
 interface BookingData {
   _id: string;
@@ -26,6 +26,7 @@ const Confirmation = () => {
   const navigate = useNavigate();
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reward, setReward] = useState<Reward | null>(null);
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -37,6 +38,15 @@ const Confirmation = () => {
       try {
         const data = await getBookingById(id);
         setBooking(data);
+        
+        // Fetch reward if exists
+        try {
+          const rewardData = await getRewardByBookingId(id);
+          setReward(rewardData);
+        } catch (rewardError) {
+          // No reward found, that's fine
+          console.log('No reward found for booking');
+        }
       } catch (error) {
         console.error('Error:', error);
         navigate('/');
@@ -61,6 +71,19 @@ const Confirmation = () => {
   }
 
   const bookingDate = new Date(booking.createdAt).toLocaleDateString();
+
+  const getRewardIcon = (type: string) => {
+    switch (type) {
+      case "freeItem":
+        return <Gift className="w-6 h-6 text-cinema-red" />;
+      case "discount":
+        return <Sparkles className="w-6 h-6 text-cinema-red" />;
+      case "upgrade":
+        return <Trophy className="w-6 h-6 text-cinema-red" />;
+      default:
+        return <Gift className="w-6 h-6 text-cinema-red" />;
+    }
+  };
 
   return (
     <div className="min-h-screen py-8">
@@ -131,6 +154,24 @@ const Confirmation = () => {
                       <span className="text-2xl font-bold text-cinema-red">${booking.totalAmount}</span>
                     </div>
                   </div>
+
+                  {/* Reward Section */}
+                  {reward && (
+                    <div className="border-t border-border pt-4">
+                      <div className="bg-gradient-to-br from-cinema-red/10 to-cinema-accent/10 rounded-lg p-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                          {getRewardIcon(reward.type)}
+                          <h4 className="font-semibold text-foreground">🎉 Reward Earned!</h4>
+                        </div>
+                        <p className="text-foreground">{reward.details}</p>
+                        {reward.expiryDate && (
+                          <p className="text-xs text-foreground-secondary">
+                            Valid until: {new Date(reward.expiryDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

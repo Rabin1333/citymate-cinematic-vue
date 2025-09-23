@@ -629,3 +629,79 @@ export async function getAnalytics(token: string, type: 'overview' | 'demographi
   if (!res.ok) throw new Error(`Failed to fetch analytics (${res.status})`);
   return res.json();
 }
+
+/** ----------------- Rewards System ----------------- **/
+export interface Reward {
+  type: string;
+  value: string;
+  details: string;
+  status: 'issued' | 'claimed' | 'expired';
+  expiryDate: string;
+  createdAt?: string;
+  bookingId?: {
+    bookingReference: string;
+    movieId: {
+      title: string;
+      poster: string;
+    };
+    showtime: string;
+    cinema: string;
+    createdAt: string;
+  };
+}
+
+export async function spinReward(bookingId: string): Promise<{ success: boolean; reward: Reward }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/rewards/spin`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ bookingId }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || `Failed to spin reward (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function getRewardByBookingId(bookingId: string): Promise<Reward | null> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/rewards/by-booking/${bookingId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.status === 404) {
+    return null; // No reward found
+  }
+
+  if (!res.ok) throw new Error(`Failed to fetch reward (${res.status})`);
+  return res.json();
+}
+
+export async function getMyRewards(status?: 'issued' | 'claimed' | 'expired'): Promise<Reward[]> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+
+  const res = await fetch(`${BASE}/api/rewards/mine?${params}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error(`Failed to fetch user rewards (${res.status})`);
+  return res.json();
+}

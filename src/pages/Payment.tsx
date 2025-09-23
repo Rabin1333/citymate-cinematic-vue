@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getBookingById } from "../services/api";
+import { getBookingById, spinReward } from "../services/api";
 import { useToast } from "@/hooks/use-toast";
+import SpinWheelModal from "@/components/SpinWheelModal";
 
 interface BookingData {
   _id: string;
@@ -27,6 +28,7 @@ const Payment = () => {
 
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSpinModal, setShowSpinModal] = useState(false);
 
   const bookingId = searchParams.get("bookingId");
 
@@ -73,6 +75,46 @@ const Payment = () => {
 
   const bookingDate = new Date(booking.createdAt).toLocaleDateString();
 
+  // Check if booking has 3+ premium seats (rows C, D, E)
+  const checkPremiumEligibility = (seats: string[]) => {
+    const premiumRows = ['C', 'D', 'E'];
+    const premiumSeats = seats.filter(seatId => {
+      const row = seatId.charAt(0);
+      return premiumRows.includes(row);
+    });
+    return premiumSeats.length >= 3;
+  };
+
+  const handlePayment = () => {
+    if (!booking) return;
+
+    toast({
+      title: "Payment Confirmed",
+      description: "Your booking has been confirmed!",
+    });
+
+    // Check if eligible for spin wheel
+    const isEligible = checkPremiumEligibility(booking.seats);
+    if (isEligible) {
+      setShowSpinModal(true);
+    } else {
+      navigate(`/confirmation/${booking._id}`);
+    }
+  };
+
+  const handleSpin = async () => {
+    if (!booking) throw new Error("No booking found");
+    const result = await spinReward(booking._id);
+    return result.reward;
+  };
+
+  const handleSpinModalClose = () => {
+    setShowSpinModal(false);
+    if (booking) {
+      navigate(`/confirmation/${booking._id}`);
+    }
+  };
+
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -107,17 +149,18 @@ const Payment = () => {
 
           <button
             className="btn-cinema w-full"
-            onClick={() => {
-              toast({
-                title: "Payment Confirmed",
-                description: "Your booking has been confirmed!",
-              });
-              navigate(`/confirmation/${booking._id}`);
-            }}
+            onClick={handlePayment}
           >
             Pay Now
           </button>
         </div>
+
+        <SpinWheelModal
+          isOpen={showSpinModal}
+          onClose={handleSpinModalClose}
+          onSpin={handleSpin}
+          onContinue={() => navigate(`/confirmation/${booking._id}`)}
+        />
       </div>
     </div>
   );
