@@ -1,23 +1,75 @@
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Download, Mail, Calendar, QrCode, Home } from 'lucide-react';
-import { movies } from '../data/movies';
+// src/pages/Confirmation.tsx - FUNCTIONAL VERSION
+import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { CheckCircle, Download, Mail, Calendar, QrCode, Home, Loader2 } from 'lucide-react';
+import { getToken } from '@/services/api';
+
+interface BookingData {
+  _id: string;
+  movieId: {
+    _id: string;
+    title: string;
+    poster: string;
+    rating: string;
+    duration: string;
+  };
+  showtime: string;
+  seats: string[];
+  cinema: string;
+  bookingReference: string;
+  totalAmount: number;
+  createdAt: string;
+}
 
 const Confirmation = () => {
-  const { id } = useParams();
-  const [searchParams] = useSearchParams();
+  const { id } = useParams(); // This is the booking ID
   const navigate = useNavigate();
+  const [booking, setBooking] = useState<BookingData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const movie = movies.find(m => m.id === parseInt(id || '0'));
-  const bookingId = searchParams.get('bookingId');
-  const seats = searchParams.get('seats')?.split(',') || [];
-  const date = searchParams.get('date');
-  const time = searchParams.get('time');
-  const cinema = searchParams.get('cinema');
-  const total = searchParams.get('total');
+  useEffect(() => {
+    const fetchBooking = async () => {
+      const token = getToken();
+      if (!token || !id) {
+        navigate('/');
+        return;
+      }
 
-  if (!movie) {
-    return <div>Movie not found</div>;
+      try {
+        const res = await fetch(`http://localhost:4000/api/bookings/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch booking');
+        
+        const data = await res.json();
+        setBooking(data);
+      } catch (error) {
+        console.error('Error:', error);
+        navigate('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBooking();
+  }, [id, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-cinema-red" />
+      </div>
+    );
   }
+
+  if (!booking) {
+    return <div>Booking not found</div>;
+  }
+
+  const bookingDate = new Date(booking.createdAt).toLocaleDateString();
 
   return (
     <div className="min-h-screen py-8">
@@ -30,7 +82,7 @@ const Confirmation = () => {
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
             Booking Confirmed!
           </h1>
-          <p className="text-lg text-foreground-secondary">
+          <p className="text-lg text-muted-foreground">
             Your tickets have been booked successfully
           </p>
         </div>
@@ -41,8 +93,8 @@ const Confirmation = () => {
             <div className="bg-card rounded-2xl p-6 border border-border">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-foreground">E-Ticket</h2>
-                <div className="text-sm text-foreground-secondary">
-                  Booking ID: <span className="font-mono text-foreground">{bookingId}</span>
+                <div className="text-sm text-muted-foreground">
+                  Booking ID: <span className="font-mono text-foreground">{booking.bookingReference}</span>
                 </div>
               </div>
 
@@ -50,8 +102,8 @@ const Confirmation = () => {
                 {/* Movie Poster */}
                 <div className="md:col-span-1">
                   <img 
-                    src={movie.poster} 
-                    alt={movie.title}
+                    src={booking.movieId.poster} 
+                    alt={booking.movieId.title}
                     className="w-full rounded-lg shadow-lg"
                   />
                 </div>
@@ -59,33 +111,33 @@ const Confirmation = () => {
                 {/* Movie Details */}
                 <div className="md:col-span-2 space-y-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-foreground">{movie.title}</h3>
-                    <p className="text-foreground-secondary">{movie.rating} • {movie.duration}</p>
+                    <h3 className="text-2xl font-bold text-foreground">{booking.movieId.title}</h3>
+                    <p className="text-muted-foreground">{booking.movieId.rating} • {booking.movieId.duration}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <div className="text-foreground-secondary">Cinema</div>
-                      <div className="font-medium text-foreground">{cinema}</div>
+                      <div className="text-muted-foreground">Cinema</div>
+                      <div className="font-medium text-foreground">{booking.cinema}</div>
                     </div>
                     <div>
-                      <div className="text-foreground-secondary">Date</div>
-                      <div className="font-medium text-foreground">{date}</div>
+                      <div className="text-muted-foreground">Date</div>
+                      <div className="font-medium text-foreground">{bookingDate}</div>
                     </div>
                     <div>
-                      <div className="text-foreground-secondary">Time</div>
-                      <div className="font-medium text-foreground">{time}</div>
+                      <div className="text-muted-foreground">Time</div>
+                      <div className="font-medium text-foreground">{booking.showtime}</div>
                     </div>
                     <div>
-                      <div className="text-foreground-secondary">Seats</div>
-                      <div className="font-medium text-foreground">{seats.join(', ')}</div>
+                      <div className="text-muted-foreground">Seats</div>
+                      <div className="font-medium text-foreground">{booking.seats.join(', ')}</div>
                     </div>
                   </div>
 
                   <div className="border-t border-border pt-4">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-foreground">Total Paid</span>
-                      <span className="text-2xl font-bold text-cinema-red">${total}</span>
+                      <span className="text-2xl font-bold text-cinema-red">${booking.totalAmount}</span>
                     </div>
                   </div>
                 </div>
@@ -101,12 +153,9 @@ const Confirmation = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground mb-2">Show this QR code at the cinema</h4>
-                    <p className="text-sm text-foreground-secondary mb-4">
-                      Present this ticket at the entrance for scanning. You can also show the digital version on your phone.
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Present this ticket at the entrance for scanning. Reference: {booking.bookingReference}
                     </p>
-                    <div className="text-xs text-foreground-secondary">
-                      Ticket valid only for the specified date, time, and seats.
-                    </div>
                   </div>
                 </div>
               </div>
@@ -119,7 +168,6 @@ const Confirmation = () => {
                 <li>• Please arrive 15 minutes before showtime</li>
                 <li>• Outside food and beverages are not permitted</li>
                 <li>• Tickets are non-refundable and non-transferable</li>
-                <li>• Valid ID required for R-rated movies</li>
               </ul>
             </div>
           </div>
@@ -128,56 +176,24 @@ const Confirmation = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-8 space-y-4">
               <div className="bg-card rounded-2xl p-6 border border-border">
-                <h3 className="text-lg font-bold text-foreground mb-4">Ticket Actions</h3>
-                
-                <div className="space-y-3">
-                  <button className="w-full btn-cinema-outline flex items-center justify-center gap-2">
-                    <Download className="w-4 h-4" />
-                    Download PDF
-                  </button>
-                  
-                  <button className="w-full btn-cinema-outline flex items-center justify-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Email Tickets
-                  </button>
-                  
-                  <button className="w-full btn-cinema-outline flex items-center justify-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Add to Calendar
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-card rounded-2xl p-6 border border-border">
                 <h3 className="text-lg font-bold text-foreground mb-4">What's Next?</h3>
                 
                 <div className="space-y-3">
                   <button 
                     onClick={() => navigate('/movies')}
-                    className="w-full btn-cinema"
+                    className="w-full bg-cinema-red text-white py-2 rounded-lg hover:bg-cinema-red/90"
                   >
                     Book Another Movie
                   </button>
                   
                   <button 
                     onClick={() => navigate('/')}
-                    className="w-full btn-cinema-outline flex items-center justify-center gap-2"
+                    className="w-full border border-border py-2 rounded-lg hover:bg-muted flex items-center justify-center gap-2"
                   >
                     <Home className="w-4 h-4" />
                     Back to Home
                   </button>
                 </div>
-              </div>
-
-              {/* Customer Support */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-800 mb-2">Need Help?</h4>
-                <p className="text-sm text-blue-700 mb-3">
-                  Contact our customer support if you have any questions about your booking.
-                </p>
-                <button className="text-sm text-blue-600 font-medium hover:text-blue-800">
-                  Contact Support →
-                </button>
               </div>
             </div>
           </div>

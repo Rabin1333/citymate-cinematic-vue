@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin, Star, Play } from "lucide-react";
-import { getMovies, getShowtimes, type UiMovie } from "../services/api";
+import { getMovieById, getShowtimes, type UiMovie } from "../services/api";
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,18 +27,17 @@ const MovieDetails = () => {
     if (!id) return;
     (async () => {
       try {
-        // 1) load all movies, then find one by id
-        const all = await getMovies(false);
-        const found = all.find((m) => String(m.id) === String(id)) || null;
-        setMovie(found);
+        // Use getMovieById for better performance (single API call instead of fetching all movies)
+        const movie = await getMovieById(id);
+        setMovie(movie);
 
-        // 2) fetch showtimes from API (fallback to movie's local showtimes if needed)
+        // Fetch showtimes from API (fallback to movie's local showtimes if needed)
         try {
-          const st = await getShowtimes(String(id));
+          const st = await getShowtimes(id);
           const arr = Array.isArray(st?.showtimes) ? st.showtimes : [];
-          setTimes(arr.length > 0 ? arr : found?.showtimes || []);
+          setTimes(arr.length > 0 ? arr : movie?.showtimes || []);
         } catch {
-          setTimes(found?.showtimes || []);
+          setTimes(movie?.showtimes || []);
         }
       } catch (e: any) {
         setError(e?.message || "Failed to load movie");

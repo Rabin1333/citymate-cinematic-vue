@@ -1,22 +1,32 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, X, Film, Settings } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, Menu, X, Film, Settings, LogOut, User } from 'lucide-react';
+import { clearAuth, getCurrentUser } from '../services/api';
 import MovieCountdown from './MovieCountdown';
 import MovieCountdownDropdown from './MovieCountdownDropdown';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
+  const currentUser = getCurrentUser();
+  const isLoggedIn = !!currentUser;
+  const isAdmin = currentUser?.role === 'admin';
+
+  const handleLogout = () => {
+    clearAuth();
+    // Force page reload to ensure all components reinitialize with new auth state
+    window.location.href = '/';
+  };
+
+  // Public links only — Admin comes from the separate conditional block below
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Movies', href: '/movies' },
     { name: 'Showtimes', href: '/showtimes' },
-    { name: 'Login', href: '/auth' },
+    ...(isLoggedIn ? [] : [{ name: 'Login', href: '/auth' }]),
   ];
-
-  // Mock admin check - in real app this would come from auth context
-  const isAdmin = true;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -39,40 +49,59 @@ const Navigation = () => {
                 key={item.name}
                 to={item.href}
                 className={`text-sm font-medium transition-colors hover:text-cinema-red ${
-                  isActive(item.href)
-                    ? 'text-cinema-red'
-                    : 'text-foreground-secondary'
+                  isActive(item.href) ? 'text-cinema-red' : 'text-foreground-secondary'
                 }`}
               >
                 {item.name}
               </Link>
             ))}
-            {isAdmin && (
+
+            {/* Admin (only if admin) */}
+            {isLoggedIn && isAdmin && (
               <Link
                 to="/admin"
                 className={`text-sm font-medium transition-colors hover:text-cinema-red flex items-center space-x-1 ${
-                  isActive('/admin')
-                    ? 'text-cinema-red'
-                    : 'text-foreground-secondary'
+                  isActive('/admin') ? 'text-cinema-red' : 'text-foreground-secondary'
                 }`}
               >
                 <Settings className="h-4 w-4" />
                 <span>Admin</span>
               </Link>
             )}
+
+            {/* User info + profile + logout (only if logged in) */}
+            {isLoggedIn && (
+              <div className="flex items-center space-x-4">
+                {/* Profile Link */}
+                <Link
+                  to="/profile"
+                  className={`text-sm font-medium transition-colors hover:text-cinema-red flex items-center space-x-1 ${
+                    isActive('/profile') ? 'text-cinema-red' : 'text-foreground-secondary'
+                  }`}
+                >
+                  <User className="h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+                
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-foreground-secondary hover:text-cinema-red transition-colors flex items-center space-x-1"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
           </nav>
 
-          {/* Movie Countdown, Timer & Search */}
+          {/* Timer & Search - Only show countdown for non-admin users */}
           <div className="hidden lg:flex items-center space-x-4">
+            {/* Countdown components will handle their own visibility based on user role */}
             <MovieCountdown />
             <MovieCountdownDropdown />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search movies..."
-                className="input-cinema pl-10 w-64"
-              />
+              <input type="text" placeholder="Search movies..." className="input-cinema pl-10 w-64" />
             </div>
           </div>
 
@@ -95,45 +124,65 @@ const Navigation = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-cinema-red ${
-                    isActive(item.href)
-                      ? 'text-cinema-red bg-cinema-red/10'
-                      : 'text-foreground-secondary'
-                  }`}
                   onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-cinema-red ${
+                    isActive(item.href) ? 'text-cinema-red bg-cinema-red/10' : 'text-foreground-secondary'
+                  }`}
                 >
                   {item.name}
                 </Link>
               ))}
-              
-              {/* Mobile Admin Link */}
-              {isAdmin && (
+
+              {/* Admin (only if admin) */}
+              {isLoggedIn && isAdmin && (
                 <Link
                   to="/admin"
-                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-cinema-red flex items-center space-x-2 ${
-                    isActive('/admin')
-                      ? 'text-cinema-red bg-cinema-red/10'
-                      : 'text-foreground-secondary'
-                  }`}
                   onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-cinema-red flex items-center space-x-2 ${
+                    isActive('/admin') ? 'text-cinema-red bg-cinema-red/10' : 'text-foreground-secondary'
+                  }`}
                 >
                   <Settings className="h-4 w-4" />
                   <span>Admin</span>
                 </Link>
               )}
-              
-              {/* Mobile Timer & Search */}
+
+              {/* Mobile Profile Link */}
+              {isLoggedIn && (
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-3 py-2 text-base font-medium transition-colors hover:text-cinema-red flex items-center space-x-2 ${
+                    isActive('/profile') ? 'text-cinema-red bg-cinema-red/10' : 'text-foreground-secondary'
+                  }`}
+                >
+                  <User className="h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              )}
+
+              {/* Mobile logout */}
+              {isLoggedIn && (
+                <div className="px-3 py-2 border-t border-cinema-border mt-2 pt-2">
+                  <button
+                    onClick={handleLogout}
+                    className="text-foreground-secondary hover:text-cinema-red transition-colors flex items-center space-x-1"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Mobile Timer & Search - Only show for non-admin users */}
               <div className="px-3 py-2 space-y-3">
+                {/* Countdown components will handle their own visibility */}
                 <div className="flex items-center justify-center">
                   <MovieCountdownDropdown />
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <input
-                    type="text"
-                    placeholder="Search movies..."
-                    className="input-cinema pl-10 w-full"
-                  />
+                  <input type="text" placeholder="Search movies..." className="input-cinema pl-10 w-full" />
                 </div>
               </div>
             </div>

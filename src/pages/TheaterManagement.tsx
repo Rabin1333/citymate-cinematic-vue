@@ -1,9 +1,14 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, Settings, Users, Monitor, Wrench } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Settings, Users, Monitor, Wrench, Search, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { getTheaters, createTheater, updateTheater, deleteTheater, getToken, getCurrentUser, type Theater, getAdminTheaters } from '@/services/api';
 
 interface SeatType {
   id: string;
@@ -23,100 +28,130 @@ interface Screen {
 }
 
 const TheaterManagement = () => {
-  const [screens, setScreens] = useState<Screen[]>([
-    {
-      id: '1',
-      name: 'Screen 1',
-      capacity: 120,
-      seatLayout: [],
-      seatTypes: [
-        { id: 'regular', name: 'Regular', price: 12, color: 'bg-blue-500' },
-        { id: 'premium', name: 'Premium', price: 18, color: 'bg-purple-500' },
-        { id: 'vip', name: 'VIP', price: 25, color: 'bg-gold-500' }
-      ],
-      status: 'active',
-      currentMovie: 'Dune'
-    },
-    {
-      id: '2',
-      name: 'Screen 2',
-      capacity: 150,
-      seatLayout: [],
-      seatTypes: [
-        { id: 'regular', name: 'Regular', price: 12, color: 'bg-blue-500' },
-        { id: 'premium', name: 'Premium', price: 18, color: 'bg-purple-500' }
-      ],
-      status: 'active',
-      currentMovie: 'The Dark Knight'
-    },
-    {
-      id: '3',
-      name: 'IMAX',
-      capacity: 200,
-      seatLayout: [],
-      seatTypes: [
-        { id: 'regular', name: 'Regular', price: 15, color: 'bg-blue-500' },
-        { id: 'premium', name: 'Premium', price: 22, color: 'bg-purple-500' },
-        { id: 'vip', name: 'VIP', price: 30, color: 'bg-gold-500' }
-      ],
-      status: 'maintenance'
+  const [theaters, setTheaters] = useState<Theater[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingTheater, setEditingTheater] = useState<Theater | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    location: '',
+    capacity: 0,
+    amenities: [] as string[]
+  });
+  const { toast } = useToast();
+  const token = getToken();
+  const user = getCurrentUser();
+
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      toast({
+        title: "Access Denied",
+        description: "You need admin access to view this page.",
+        variant: "destructive",
+      });
+      return;
     }
-  ]);
-
-  const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
-  const [showSeatEditor, setShowSeatEditor] = useState(false);
-
-  const seatTypes: SeatType[] = [
-    { id: 'regular', name: 'Regular', price: 12, color: 'bg-blue-500' },
-    { id: 'premium', name: 'Premium', price: 18, color: 'bg-purple-500' },
-    { id: 'vip', name: 'VIP', price: 25, color: 'bg-gold-500' },
-    { id: 'disabled', name: 'Accessible', price: 12, color: 'bg-green-500' }
-  ];
-
-  const SeatMapEditor = ({ screen }: { screen: Screen }) => {
-    const rows = 10;
-    const seatsPerRow = 12;
     
+    fetchTheaters();
+  }, []);
+
+  const fetchTheaters = async () => {
+    try {
+      const data = await getAdminTheaters();
+      setTheaters(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch theaters",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!token) return;
+    
+    try {
+      if (editingTheater) {
+        await updateTheater(token, editingTheater._id, formData);
+        toast({
+          title: "Success",
+          description: "Theater updated successfully",
+        });
+      } else {
+        await createTheater(token, formData);
+        toast({
+          title: "Success",
+          description: "Theater created successfully",
+        });
+      }
+      
+      fetchTheaters();
+      resetForm();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save theater",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token || !window.confirm('Are you sure you want to delete this theater?')) return;
+    
+    try {
+      await deleteTheater(token, id);
+      toast({
+        title: "Success",
+        description: "Theater deleted successfully",
+      });
+      fetchTheaters();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete theater",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({ name: '', location: '', capacity: 0, amenities: [] });
+    setEditingTheater(null);
+    setShowAddDialog(false);
+  };
+
+  const handleEdit = (theater: Theater) => {
+    setEditingTheater(theater);
+    setFormData({
+      name: theater.name,
+      location: theater.location,
+      capacity: theater.capacity,
+      amenities: theater.amenities
+    });
+    setShowAddDialog(true);
+  };
+
+  const filteredTheaters = theaters.filter(theater =>
+    theater.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    theater.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="bg-muted/50 p-4 rounded-lg">
-          <h4 className="font-medium mb-2">Screen</h4>
-          <div className="w-full h-2 bg-primary/20 rounded mb-4"></div>
-          
-          <div className="space-y-2">
-            {Array.from({ length: rows }, (_, rowIndex) => (
-              <div key={rowIndex} className="flex justify-center items-center gap-1">
-                <span className="w-6 text-center text-sm font-medium">
-                  {String.fromCharCode(65 + rowIndex)}
-                </span>
-                {Array.from({ length: seatsPerRow }, (_, seatIndex) => (
-                  <button
-                    key={seatIndex}
-                    className="w-6 h-6 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs"
-                    title={`${String.fromCharCode(65 + rowIndex)}${seatIndex + 1}`}
-                  >
-                    {seatIndex + 1}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <div className="flex gap-4">
-          <div className="space-y-2">
-            <h4 className="font-medium">Seat Types</h4>
-            {seatTypes.map((type) => (
-              <div key={type.id} className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded ${type.color}`}></div>
-                <span className="text-sm">{type.name} - ${type.price}</span>
-              </div>
-            ))}
-          </div>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading theaters...</p>
         </div>
       </div>
     );
-  };
+  }
+
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -124,60 +159,130 @@ const TheaterManagement = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Theater Management</h1>
-            <p className="text-muted-foreground">Manage screens, seats, and pricing</p>
+            <p className="text-muted-foreground">Manage theaters and screens</p>
           </div>
-          <Button className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add New Screen
-          </Button>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add Theater
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingTheater ? 'Edit Theater' : 'Add New Theater'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Theater Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter theater name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Enter location"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="capacity">Capacity</Label>
+                  <Input
+                    id="capacity"
+                    type="number"
+                    value={formData.capacity}
+                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })}
+                    placeholder="Enter capacity"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="amenities">Amenities (comma-separated)</Label>
+                  <Input
+                    id="amenities"
+                    value={formData.amenities.join(', ')}
+                    onChange={(e) => setFormData({ ...formData, amenities: e.target.value.split(',').map(a => a.trim()) })}
+                    placeholder="IMAX, Dolby Atmos, Reclining Seats"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={resetForm}>Cancel</Button>
+                  <Button onClick={handleSave}>
+                    {editingTheater ? 'Update' : 'Create'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <Tabs defaultValue="screens" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="screens">Screen Management</TabsTrigger>
-            <TabsTrigger value="pricing">Pricing Tiers</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+        {/* Search and Filters */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search theaters by name or location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        <Tabs defaultValue="theaters" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="theaters">Theater Overview</TabsTrigger>
+            <TabsTrigger value="stats">Statistics</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="screens" className="space-y-6">
+          <TabsContent value="theaters" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {screens.map((screen) => (
-                <Card key={screen.id} className="relative">
+              {filteredTheaters.map((theater) => (
+                <Card key={theater._id} className="relative">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2">
                         <Monitor className="h-5 w-5" />
-                        {screen.name}
+                        {theater.name}
                       </CardTitle>
-                      <Badge 
-                        variant={screen.status === 'active' ? 'default' : 'secondary'}
-                        className={
-                          screen.status === 'active' ? 'bg-green-500' :
-                          screen.status === 'maintenance' ? 'bg-red-500' : 'bg-yellow-500'
-                        }
-                      >
-                        {screen.status}
+                      <Badge variant="default" className="bg-green-500">
+                        Active
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Capacity:</span>
-                        <span className="font-medium">{screen.capacity} seats</span>
+                        <span className="text-muted-foreground">Location:</span>
+                        <span className="font-medium">{theater.location}</span>
                       </div>
-                      {screen.currentMovie && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Capacity:</span>
+                        <span className="font-medium">{theater.capacity} seats</span>
+                      </div>
+                      {theater.totalBookings && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Current Movie:</span>
-                          <span className="font-medium">{screen.currentMovie}</span>
+                          <span className="text-muted-foreground">Total Bookings:</span>
+                          <span className="font-medium">{theater.totalBookings}</span>
+                        </div>
+                      )}
+                      {theater.occupancyRate && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Occupancy Rate:</span>
+                          <span className="font-medium">{theater.occupancyRate}%</span>
                         </div>
                       )}
                       <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Seat Types:</span>
+                        <span className="text-sm text-muted-foreground">Amenities:</span>
                         <div className="flex gap-1 flex-wrap">
-                          {screen.seatTypes.map((type) => (
-                            <Badge key={type.id} variant="outline" className="text-xs">
-                              {type.name} - ${type.price}
+                          {theater.amenities.map((amenity, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {amenity}
                             </Badge>
                           ))}
                         </div>
@@ -186,17 +291,18 @@ const TheaterManagement = () => {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => {
-                            setSelectedScreen(screen);
-                            setShowSeatEditor(true);
-                          }}
+                          onClick={() => handleEdit(theater)}
                         >
                           <Edit className="h-3 w-3 mr-1" />
-                          Edit Layout
+                          Edit
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Settings className="h-3 w-3 mr-1" />
-                          Configure
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDelete(theater._id)}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </div>
@@ -204,99 +310,53 @@ const TheaterManagement = () => {
                 </Card>
               ))}
             </div>
+          </TabsContent>
 
-            {showSeatEditor && selectedScreen && (
+          <TabsContent value="stats" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
-                <CardHeader>
-                  <CardTitle>Seat Layout Editor - {selectedScreen.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <SeatMapEditor screen={selectedScreen} />
-                  <div className="flex gap-2 mt-4">
-                    <Button>Save Layout</Button>
-                    <Button variant="outline" onClick={() => setShowSeatEditor(false)}>
-                      Cancel
-                    </Button>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Theaters</p>
+                      <p className="text-2xl font-bold">{theaters.length}</p>
+                    </div>
+                    <Monitor className="h-8 w-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
-            )}
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Capacity</p>
+                      <p className="text-2xl font-bold">{theaters.reduce((sum, t) => sum + t.capacity, 0)}</p>
+                    </div>
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Occupancy</p>
+                      <p className="text-2xl font-bold">
+                        {theaters.length > 0 
+                          ? Math.round(theaters.reduce((sum, t) => sum + (t.occupancyRate || 0), 0) / theaters.length)
+                          : 0
+                        }%
+                      </p>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="pricing" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing Tier Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {seatTypes.map((type) => (
-                    <div key={type.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-6 h-6 rounded ${type.color}`}></div>
-                        <div>
-                          <h4 className="font-medium">{type.name}</h4>
-                          <p className="text-sm text-muted-foreground">Standard pricing tier</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-semibold">${type.price}</p>
-                          <p className="text-sm text-muted-foreground">per ticket</p>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="maintenance" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wrench className="h-5 w-5" />
-                  Maintenance Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {screens.map((screen) => (
-                    <div key={screen.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Monitor className="h-5 w-5" />
-                        <div>
-                          <h4 className="font-medium">{screen.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {screen.status === 'maintenance' ? 'Under maintenance' : 'Operational'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant={screen.status === 'active' ? 'default' : 'secondary'}
-                          className={
-                            screen.status === 'active' ? 'bg-green-500' :
-                            screen.status === 'maintenance' ? 'bg-red-500' : 'bg-yellow-500'
-                          }
-                        >
-                          {screen.status}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          {screen.status === 'maintenance' ? 'Mark Active' : 'Schedule Maintenance'}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </div>

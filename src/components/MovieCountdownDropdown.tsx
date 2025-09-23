@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Timer, Bell, BellRing, Calendar, Film, Star, Play, ExternalLink, Filter, ChevronDown, Clock } from 'lucide-react';
-import { comingSoonMovies } from '@/data/movies';
+import { getMovies, getCurrentUser, type UiMovie } from '@/services/api';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
@@ -22,81 +22,186 @@ interface TimeRemaining {
 }
 
 interface MovieCountdown {
-  movieId: number;
+  movieId: string;
   title: string;
   poster: string;
   releaseDate: string;
   genre: string[];
   rating: number;
-  releaseType: 'new' | 'rerelease' | 'special';
+  releaseType: string;
   preOrderCount: number;
   timeRemaining: TimeRemaining;
 }
 
+// Shared notification state management
+class NotificationManager {
+  private static instance: NotificationManager;
+  private reminders: Set<string> = new Set();
+  private listeners: ((reminders: Set<string>) => void)[] = [];
+
+  static getInstance(): NotificationManager {
+    if (!NotificationManager.instance) {
+      NotificationManager.instance = new NotificationManager();
+    }
+    return NotificationManager.instance;
+  }
+
+  constructor() {
+    // Load saved reminders from localStorage
+    const saved = localStorage.getItem('movieReminders');
+    if (saved) {
+      try {
+        this.reminders = new Set(JSON.parse(saved));
+      } catch {
+        this.reminders = new Set();
+      }
+    }
+  }
+
+  subscribe(listener: (reminders: Set<string>) => void) {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
+  getReminders(): Set<string> {
+    return new Set(this.reminders);
+  }
+
+  toggleReminder(movieId: string): boolean {
+    if (this.reminders.has(movieId)) {
+      this.reminders.delete(movieId);
+    } else {
+      this.reminders.add(movieId);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('movieReminders', JSON.stringify([...this.reminders]));
+    
+    // Notify all listeners
+    this.listeners.forEach(listener => listener(new Set(this.reminders)));
+    
+    return this.reminders.has(movieId);
+  }
+
+  hasReminder(movieId: string): boolean {
+    return this.reminders.has(movieId);
+  }
+
+  removeReminder(movieId: string) {
+    this.reminders.delete(movieId);
+    localStorage.setItem('movieReminders', JSON.stringify([...this.reminders]));
+    this.listeners.forEach(listener => listener(new Set(this.reminders)));
+  }
+}
+
 const MovieCountdownDropdown = () => {
   const [movieCountdowns, setMovieCountdowns] = useState<MovieCountdown[]>([]);
-  const [reminders, setReminders] = useState<Set<number>>(new Set());
+  const [reminders, setReminders] = useState<Set<string>>(new Set());
   const [activeFilter, setActiveFilter] = useState<'week' | 'month' | 'all'>('month');
   const [sortBy, setSortBy] = useState<'date' | 'anticipated'>('date');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check if user should see countdown (not admin)
+  const currentUser = getCurrentUser();
+  const shouldShowCountdown = currentUser?.role !== 'admin';
+
+  const notificationManager = NotificationManager.getInstance();
+
+  const calculateTimeRemaining = (releaseDate: string): TimeRemaining | null => {
+    const now = new Date().getTime();
+    const target = new Date(releaseDate).getTime();
+    const difference = target - now;
+
+    if (difference <= 0) return null;
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+    const totalHours = Math.floor(difference / (1000 * 60 * 60));
+
+    return { days, hours, minutes, seconds, totalHours };
+  };
 
   useEffect(() => {
-    const updateCountdowns = () => {
-      const now = new Date().getTime();
-      
-      const countdowns = comingSoonMovies.map(movie => {
-        const releaseDate = movie.releaseDate ? new Date(movie.releaseDate).getTime() : now + (7 * 24 * 60 * 60 * 1000);
-        const difference = releaseDate - now;
+    // Don't load if admin user
+    if (!shouldShowCountdown) {
+      setIsLoading(false);
+      return;
+    }
 
-        let timeRemaining: TimeRemaining = { days: 0, hours: 0, minutes: 0, seconds: 0, totalHours: 0 };
+    // Subscribe to notification state changes
+    const unsubscribe = notificationManager.subscribe(setReminders);
+    setReminders(notificationManager.getReminders());
+
+    const loadUpcomingMovies = async () => {
+      try {
+        setIsLoading(true);
+        // Get upcoming movies from API
+        const upcomingMovies = await getMovies(true);
         
-        if (difference > 0) {
-          const totalHours = Math.floor(difference / (1000 * 60 * 60));
-          timeRemaining = {
-            days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-            minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-            seconds: Math.floor((difference % (1000 * 60)) / 1000),
-            totalHours
-          };
-        } else {
-          // Movie is now available
-          if (reminders.has(movie.id)) {
-            showNotification(movie.title);
-            setReminders(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(movie.id);
-              return newSet;
-            });
-          }
-        }
+        // Filter movies with valid future release dates and calculate countdowns
+        const countdowns = upcomingMovies
+          .filter(movie => movie.releaseDate && new Date(movie.releaseDate) > new Date())
+          .map(movie => {
+            const timeRemaining = calculateTimeRemaining(movie.releaseDate!);
+            if (!timeRemaining) return null;
+            
+            return {
+              movieId: movie.id,
+              title: movie.title,
+              poster: movie.poster,
+              releaseDate: movie.releaseDate!,
+              genre: movie.genre,
+              rating: 4.2, // Default rating since it's not in our movie model yet
+              releaseType: 'new',
+              preOrderCount: Math.floor(Math.random() * 500) + 100, // Random for demo
+              timeRemaining
+            };
+          })
+          .filter((countdown): countdown is MovieCountdown => countdown !== null);
 
-        return {
-          movieId: movie.id,
-          title: movie.title,
-          poster: movie.poster,
-          releaseDate: movie.releaseDate || '',
-          genre: typeof movie.genre === 'string' ? [movie.genre] : movie.genre,
-          rating: typeof movie.rating === 'number' ? movie.rating : 4.2,
-          releaseType: 'new' as const,
-          preOrderCount: Math.floor(Math.random() * 500) + 100,
-          timeRemaining
-        };
-      }).filter(countdown => 
-        countdown.timeRemaining.days > 0 || 
-        countdown.timeRemaining.hours > 0 || 
-        countdown.timeRemaining.minutes > 0 || 
-        countdown.timeRemaining.seconds > 0
-      );
-
-      setMovieCountdowns(countdowns);
+        setMovieCountdowns(countdowns);
+        
+        // Cache movies for countdown updates
+        localStorage.setItem('upcomingMoviesCache', JSON.stringify(upcomingMovies));
+      } catch (error) {
+        console.error('Failed to load upcoming movies:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    updateCountdowns();
+    const updateCountdowns = () => {
+      setMovieCountdowns(prev => 
+        prev.map(countdown => {
+          const timeRemaining = calculateTimeRemaining(countdown.releaseDate);
+          if (!timeRemaining) {
+            // Movie is now available
+            if (notificationManager.hasReminder(countdown.movieId)) {
+              showNotification(countdown.title);
+              notificationManager.removeReminder(countdown.movieId);
+            }
+            return null;
+          }
+          return { ...countdown, timeRemaining };
+        }).filter((countdown): countdown is MovieCountdown => countdown !== null)
+      );
+    };
+
+    // Initial load
+    loadUpcomingMovies();
+
+    // Update countdowns every second for real-time display
     const interval = setInterval(updateCountdowns, 1000);
 
-    return () => clearInterval(interval);
-  }, [reminders]);
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
+  }, [shouldShowCountdown]);
 
   const showNotification = (movieTitle: string) => {
     // Browser notification
@@ -107,31 +212,21 @@ const MovieCountdownDropdown = () => {
       });
     }
     
-    // In-app notification (you could integrate with toast here)
     console.log(`🎬 ${movieTitle} is now available for booking!`);
   };
 
-  const toggleReminder = async (movieId: number, movieTitle: string) => {
-    if (!reminders.has(movieId)) {
-      // Request notification permission
-      if ('Notification' in window && Notification.permission === 'default') {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          alert('Please enable notifications to receive movie reminders!');
-          return;
-        }
+  const toggleReminder = async (movieId: string, movieTitle: string) => {
+    // Request notification permission if needed
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('Please enable notifications to receive movie reminders!');
+        return;
       }
-      
-      setReminders(prev => new Set([...prev, movieId]));
-      console.log(`Reminder set for ${movieTitle}`);
-    } else {
-      setReminders(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(movieId);
-        return newSet;
-      });
-      console.log(`Reminder removed for ${movieTitle}`);
     }
+    
+    const isSet = notificationManager.toggleReminder(movieId);
+    console.log(`Reminder ${isSet ? 'set' : 'removed'} for ${movieTitle}`);
   };
 
   const formatTimeRemaining = (time: TimeRemaining) => {
@@ -146,8 +241,10 @@ const MovieCountdownDropdown = () => {
     } else if (days > 0) {
       return `${days}d ${hours}h ${minutes}m`;
     } else if (totalHours > 1) {
+      // Always show seconds for final day
       return `${hours}h ${minutes}m ${seconds}s`;
     } else {
+      // Always show seconds for final hour
       return `${minutes}m ${seconds}s`;
     }
   };
@@ -165,7 +262,6 @@ const MovieCountdownDropdown = () => {
     let filtered = movieCountdowns;
     
     // Filter by time period
-    const now = Date.now();
     switch (activeFilter) {
       case 'week':
         filtered = filtered.filter(movie => movie.timeRemaining.days <= 7);
@@ -186,7 +282,12 @@ const MovieCountdownDropdown = () => {
     return filtered;
   };
 
-  if (movieCountdowns.length === 0) {
+  // Don't render for admin users
+  if (!shouldShowCountdown) {
+    return null;
+  }
+
+  if (movieCountdowns.length === 0 && !isLoading) {
     return null;
   }
 
@@ -210,6 +311,9 @@ const MovieCountdownDropdown = () => {
               {movieCountdowns.length}
             </Badge>
           )}
+          {reminders.size > 0 && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          )}
         </Button>
       </DropdownMenuTrigger>
       
@@ -225,6 +329,11 @@ const MovieCountdownDropdown = () => {
               <Film className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-foreground">Upcoming Releases</h3>
             </div>
+            {reminders.size > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {reminders.size} reminder{reminders.size !== 1 ? 's' : ''}
+              </Badge>
+            )}
           </div>
 
           {/* Filter Tabs */}
@@ -283,6 +392,9 @@ const MovieCountdownDropdown = () => {
               <div className="text-center py-8">
                 <Timer className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">No upcoming movies for this period</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Add movies with future release dates in the admin panel
+                </p>
               </div>
             ) : (
               filteredMovies.map((countdown) => (
@@ -328,18 +440,16 @@ const MovieCountdownDropdown = () => {
                             <span>{countdown.preOrderCount} interested</span>
                           </div>
 
-                          {countdown.releaseDate && (
-                            <div className="flex items-center space-x-1 mt-1">
-                              <Calendar className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(countdown.releaseDate).toLocaleDateString()}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex items-center space-x-1 mt-1">
+                            <Calendar className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(countdown.releaseDate).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Countdown Timer */}
+                      {/* Countdown Timer with Seconds */}
                       <div className={`mt-2 px-2 py-1 rounded text-xs font-mono font-semibold ${
                         countdown.timeRemaining.totalHours < 24 
                           ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
@@ -371,7 +481,7 @@ const MovieCountdownDropdown = () => {
                           onClick={() => toggleReminder(countdown.movieId, countdown.title)}
                         >
                           {reminders.has(countdown.movieId) ? (
-                            <BellRing className="h-3 w-3 text-primary" />
+                            <BellRing className="h-3 w-3 text-primary animate-pulse" />
                           ) : (
                             <Bell className="h-3 w-3 text-muted-foreground hover:text-primary" />
                           )}

@@ -1,8 +1,7 @@
-// src/pages/Auth.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Phone, Eye, EyeOff } from "lucide-react";
-import { login, saveAuth } from "../services/api";
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { login, register, saveAuth } from "@/services/api";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -14,7 +13,6 @@ const Auth = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -31,44 +29,61 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        // ---- REAL LOGIN ----
         const { token, user } = await login(formData.email, formData.password);
         saveAuth(token, user);
-        // optional: route admin to /admin
         navigate(user.role === "admin" ? "/admin" : "/");
       } else {
-        // ---- SIGN UP (skipped for Iteration 2) ----
-        // You can implement POST /api/auth/register later.
-        // For now, just show a friendly message:
-        setError("Sign up is not enabled for Iteration 2. Please login with a test user.");
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+        
+        if (formData.password.length < 6) {
+          setError("Password must be at least 6 characters long");
+          setLoading(false);
+          return;
+        }
+
+        if (formData.name.trim().length < 2) {
+          setError("Name must be at least 2 characters long");
+          setLoading(false);
+          return;
+        }
+
+        const { token, user } = await register(formData.name, formData.email, formData.password);
+        saveAuth(token, user);
+        navigate("/");
       }
     } catch (err: any) {
-      setError(err?.message || "Login failed. Check your email/password.");
+      setError(err?.message || (isLogin ? "Login failed. Check your email/password." : "Registration failed. Please try again."));
     } finally {
       setLoading(false);
     }
   }
 
-  const handleSocialLogin = (provider: string) => {
-    // Social providers are out-of-scope for Iteration 2
-    setError(`${provider} login is not enabled for Iteration 2.`);
+  const getPasswordStrength = (password: string) => {
+    if (password.length === 0) return { strength: 0, text: "", color: "" };
+    if (password.length < 6) return { strength: 1, text: "Weak - At least 6 characters needed", color: "bg-red-500" };
+    if (password.length < 10) return { strength: 2, text: "Good - Consider adding more characters", color: "bg-yellow-500" };
+    return { strength: 3, text: "Strong password", color: "bg-green-500" };
   };
+
+  const passwordStrength = getPasswordStrength(formData.password);
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12">
       <div className="max-w-md w-full mx-4">
-        <div className="bg-card rounded-2xl p-8 border border-border shadow-cinematic">
-          {/* Header */}
+        <div className="bg-card rounded-2xl p-8 border border-border shadow-lg">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h1>
-            <p className="text-foreground-secondary">
+            <p className="text-muted-foreground">
               {isLogin ? "Sign in to your account" : "Join City Mate Movie today"}
             </p>
           </div>
 
-          {/* Auth Tabs */}
           <div className="flex bg-background rounded-lg p-1 mb-6">
             <button
               onClick={() => {
@@ -77,8 +92,8 @@ const Auth = () => {
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                 isLogin
-                  ? "bg-cinema-red text-white shadow-button"
-                  : "text-foreground-secondary hover:text-foreground"
+                  ? "bg-cinema-red text-white"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sign In
@@ -90,15 +105,14 @@ const Auth = () => {
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
                 !isLogin
-                  ? "bg-cinema-red text-white shadow-button"
-                  : "text-foreground-secondary hover:text-foreground"
+                  ? "bg-cinema-red text-white"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Sign Up
             </button>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
@@ -113,7 +127,7 @@ const Auth = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
-                    className="input-cinema pl-12"
+                    className="w-full pl-12 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-cinema-red"
                     required={!isLogin}
                   />
                 </div>
@@ -132,31 +146,11 @@ const Auth = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Enter your email"
-                  className="input-cinema pl-12"
+                  className="w-full pl-12 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-cinema-red"
                   required
                 />
               </div>
             </div>
-
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter your phone number"
-                    className="input-cinema pl-12"
-                    required={!isLogin}
-                  />
-                </div>
-              </div>
-            )}
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -170,7 +164,7 @@ const Auth = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Enter your password"
-                  className="input-cinema pl-12 pr-12"
+                  className="w-full pl-12 pr-12 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-cinema-red"
                   required
                 />
                 <button
@@ -181,6 +175,24 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              
+              {!isLogin && formData.password && (
+                <div className="mt-2">
+                  <div className="flex gap-1">
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded ${
+                          i < passwordStrength.strength ? passwordStrength.color : "bg-gray-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {passwordStrength.text}
+                  </p>
+                </div>
+              )}
             </div>
 
             {!isLogin && (
@@ -196,81 +208,44 @@ const Auth = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     placeholder="Confirm your password"
-                    className="input-cinema pl-12"
+                    className="w-full pl-12 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-cinema-red"
                     required={!isLogin}
                   />
                 </div>
               </div>
             )}
 
-            {isLogin && (
-              <div className="flex items-center justify-between">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 text-cinema-red bg-background border-border rounded focus:ring-cinema-red"
-                  />
-                  <span className="ml-2 text-sm text-foreground-secondary">Remember me</span>
-                </label>
-                <button type="button" className="text-sm text-cinema-red hover:text-cinema-red-dark">
-                  Forgot password?
-                </button>
-              </div>
-            )}
-
             {error && (
-              <div className="text-sm text-red-500">
-                {error}
+              <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3">
+                <p className="text-sm text-red-500">{error}</p>
               </div>
             )}
 
-            <button type="submit" className="w-full btn-cinema" disabled={loading}>
-              {loading ? (isLogin ? "Signing in…" : "Creating…") : isLogin ? "Sign In" : "Create Account"}
+            <button 
+              type="submit" 
+              className="w-full bg-cinema-red text-white py-2 rounded-lg hover:bg-cinema-red/90 transition-colors disabled:opacity-50" 
+              disabled={loading}
+            >
+              {loading ? (isLogin ? "Signing in..." : "Creating account...") : isLogin ? "Sign In" : "Create Account"}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="my-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-card text-foreground-secondary">Or continue with</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Social Login */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleSocialLogin("google")}
-              className="w-full btn-cinema-outline flex items-center justify-center gap-2"
-            >
-              <div className="w-5 h-5 bg-red-500 rounded text-white text-xs font-bold flex items-center justify-center">
-                G
-              </div>
-              Google
-            </button>
-            <button
-              onClick={() => handleSocialLogin("facebook")}
-              className="w-full btn-cinema-outline flex items-center justify-center gap-2"
-            >
-              <div className="w-5 h-5 bg-blue-600 rounded text-white text-xs font-bold flex items-center justify-center">
-                f
-              </div>
-              Facebook
-            </button>
-          </div>
-
-          {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-foreground-secondary">
+            <p className="text-sm text-muted-foreground">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-cinema-red hover:text-cinema-red-dark font-medium"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError("");
+                  setFormData({
+                    name: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                  });
+                }}
+                className="text-cinema-red hover:underline font-medium"
               >
                 {isLogin ? "Sign up" : "Sign in"}
               </button>

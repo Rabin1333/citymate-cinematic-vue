@@ -18,9 +18,20 @@ interface Seat {
 }
 
 const SeatSelection = () => {
+  console.log("=== SeatSelection Component Started ===");
+  
   const { id } = useParams(); // movie id (string)
+  console.log("Movie ID from useParams:", id);
+  console.log("Type of ID:", typeof id);
+  
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  
+  console.log("Search params:", {
+    date: searchParams.get("date"),
+    time: searchParams.get("time"), 
+    cinema: searchParams.get("cinema")
+  });
 
   const [movie, setMovie] = useState<UiMovie | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,11 +42,19 @@ const SeatSelection = () => {
 
   // --- Load movie from API ---
   useEffect(() => {
+    console.log("useEffect triggered, looking for movie with ID:", id);
     let alive = true;
     (async () => {
       try {
-        const all = await getMovies(false); // all movies
+        console.log("Fetching movies...");
+        const all = await getMovies(false);
+        console.log("Received movies:", all.length, "total");
+        console.log("Available movie IDs:", all.map(x => x.id));
+        console.log("Looking for ID:", id);
+        
         const m = all.find((x) => x.id === id);
+        console.log("Found movie:", m ? `${m.title} (ID: ${m.id})` : "NOT FOUND");
+        
         if (alive) setMovie(m ?? null);
       } catch (e) {
         console.error("Failed to load movie", e);

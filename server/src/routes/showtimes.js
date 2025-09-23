@@ -1,5 +1,6 @@
 // server/src/routes/showtimes.js
 const express = require("express");
+const mongoose = require("mongoose");
 const Movie = require("../models/Movie");
 
 const router = express.Router();
@@ -12,10 +13,20 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const { movieId } = req.query;
-    if (!movieId) return res.status(400).json({ message: "movieId is required" });
+    
+    if (!movieId) {
+      return res.status(400).json({ message: "movieId is required" });
+    }
+
+    // Validate movieId (must be a valid ObjectId)
+    if (!mongoose.Types.ObjectId.isValid(movieId)) {
+      return res.status(400).json({ message: "Invalid movieId format" });
+    }
 
     const movie = await Movie.findById(movieId).select("title showtimes");
-    if (!movie) return res.status(404).json({ message: "Movie not found" });
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
 
     res.json({
       movieId,

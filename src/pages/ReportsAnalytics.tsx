@@ -1,165 +1,103 @@
-import { useState } from 'react';
+// src/pages/ReportsAnalytics.tsx - COMPLETE FUNCTIONAL VERSION
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { Calendar, Download, Filter, TrendingUp, Users, DollarSign, Clock, MapPin } from 'lucide-react';
+import { Calendar, Download, Filter, TrendingUp, Users, DollarSign, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { getBookingStats, getToken, getCurrentUser, type BookingStats } from '@/services/api';
 
 const ReportsAnalytics = () => {
   const [dateRange, setDateRange] = useState({ from: '2024-01-01', to: '2024-01-31' });
+  const [bookingStats, setBookingStats] = useState<BookingStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const token = getToken();
+  const user = getCurrentUser();
 
-  // Mock data for charts
-  const attendanceData = [
-    { date: 'Mon', attendance: 245 },
-    { date: 'Tue', attendance: 189 },
-    { date: 'Wed', attendance: 312 },
-    { date: 'Thu', attendance: 287 },
-    { date: 'Fri', attendance: 456 },
-    { date: 'Sat', attendance: 523 },
-    { date: 'Sun', attendance: 498 }
-  ];
-
-  const genrePopularityData = [
-    { genre: 'Action', tickets: 1245, revenue: 18675 },
-    { genre: 'Drama', tickets: 987, revenue: 14805 },
-    { genre: 'Comedy', tickets: 756, revenue: 11340 },
-    { genre: 'Sci-Fi', tickets: 654, revenue: 9810 },
-    { genre: 'Horror', tickets: 432, revenue: 6480 },
-    { genre: 'Romance', tickets: 321, revenue: 4815 }
-  ];
-
-  const pieChartData = [
-    { name: 'Action', value: 35, color: '#8884d8' },
-    { name: 'Drama', value: 25, color: '#82ca9d' },
-    { name: 'Comedy', value: 20, color: '#ffc658' },
-    { name: 'Sci-Fi', value: 15, color: '#ff7300' },
-    { name: 'Other', value: 5, color: '#0088fe' }
-  ];
-
-  const seasonalTrendsData = [
-    { month: 'Jan', tickets: 2456, revenue: 36840 },
-    { month: 'Feb', tickets: 2789, revenue: 41835 },
-    { month: 'Mar', tickets: 3245, revenue: 48675 },
-    { month: 'Apr', tickets: 2987, revenue: 44805 },
-    { month: 'May', tickets: 3456, revenue: 51840 },
-    { month: 'Jun', tickets: 4123, revenue: 61845 },
-    { month: 'Jul', tickets: 4567, revenue: 68505 },
-    { month: 'Aug', tickets: 4234, revenue: 63510 },
-    { month: 'Sep', tickets: 3789, revenue: 56835 },
-    { month: 'Oct', tickets: 3234, revenue: 48510 },
-    { month: 'Nov', tickets: 2987, revenue: 44805 },
-    { month: 'Dec', tickets: 3567, revenue: 53505 }
-  ];
-
-  const demographicData = [
-    { ageGroup: '18-24', percentage: 28, count: 2456 },
-    { ageGroup: '25-34', percentage: 35, count: 3078 },
-    { ageGroup: '35-44', percentage: 22, count: 1934 },
-    { ageGroup: '45-54', percentage: 10, count: 879 },
-    { ageGroup: '55+', percentage: 5, count: 439 }
-  ];
-
-  const busyTimesData = [
-    { hour: '10:00', bookings: 23 },
-    { hour: '12:00', bookings: 45 },
-    { hour: '14:00', bookings: 67 },
-    { hour: '16:00', bookings: 89 },
-    { hour: '18:00', bookings: 156 },
-    { hour: '20:00', bookings: 234 },
-    { hour: '22:00', bookings: 123 }
-  ];
-
-  const customReports = [
-    {
-      id: '1',
-      name: 'Monthly Revenue Report',
-      description: 'Comprehensive monthly revenue breakdown by movie, screen, and time',
-      lastGenerated: '2024-01-20',
-      format: 'PDF'
-    },
-    {
-      id: '2',
-      name: 'Customer Retention Analysis',
-      description: 'Analysis of customer return rates and loyalty patterns',
-      lastGenerated: '2024-01-18',
-      format: 'Excel'
-    },
-    {
-      id: '3',
-      name: 'Peak Hours Optimization',
-      description: 'Detailed analysis of booking patterns by time and day',
-      lastGenerated: '2024-01-15',
-      format: 'CSV'
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      toast({
+        title: "Access Denied",
+        description: "You need admin access to view this page.",
+        variant: "destructive",
+      });
+      return;
     }
-  ];
-
-  const HeatmapVisualization = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const hours = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
     
-    const heatmapData = days.map(day => 
-      hours.map(hour => ({
-        day,
-        hour,
-        bookings: Math.floor(Math.random() * 100) + 10
-      }))
-    ).flat();
+    fetchAnalytics();
+  }, []);
 
-    const getIntensityColor = (bookings: number) => {
-      if (bookings < 30) return 'bg-blue-100';
-      if (bookings < 60) return 'bg-blue-300';
-      if (bookings < 90) return 'bg-blue-500';
-      return 'bg-blue-700';
-    };
+  const fetchAnalytics = async () => {
+    if (!token) return;
+    
+    try {
+      const stats = await getBookingStats(dateRange);
+      setBookingStats(stats);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch analytics data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleDateRangeApply = () => {
+    setLoading(true);
+    fetchAnalytics();
+  };
+
+  const exportData = (format: 'csv' | 'pdf') => {
+    if (!bookingStats) return;
+    
+    if (format === 'csv') {
+      const csvData = [
+        ['Metric', 'Value'],
+        ['Total Revenue', `$${bookingStats.totalRevenue}`],
+        ['Total Tickets', bookingStats.totalTickets.toString()],
+        ['Average Occupancy', `${bookingStats.averageOccupancy}%`],
+        ['Unique Visitors', bookingStats.uniqueVisitors.toString()],
+        ...bookingStats.genreStats.map(genre => [`${genre.genre} - Tickets`, genre.tickets.toString()]),
+        ...bookingStats.genreStats.map(genre => [`${genre.genre} - Revenue`, `$${genre.revenue}`])
+      ];
+      
+      const csvContent = csvData.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analytics-report-${dateRange.from}-to-${dateRange.to}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export Complete",
+        description: "CSV report has been downloaded",
+      });
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="space-y-4">
-        <h4 className="font-medium">Booking Intensity Heatmap</h4>
-        <div className="overflow-x-auto">
-          <div className="grid grid-cols-8 gap-1 min-w-[600px]">
-            <div></div>
-            {hours.map(hour => (
-              <div key={hour} className="text-center text-sm font-medium p-2">
-                {hour}
-              </div>
-            ))}
-            
-            {days.map(day => (
-              <>
-                <div key={day} className="text-sm font-medium p-2 flex items-center">
-                  {day}
-                </div>
-                {hours.map(hour => {
-                  const data = heatmapData.find(d => d.day === day && d.hour === hour);
-                  return (
-                    <div 
-                      key={`${day}-${hour}`}
-                      className={`p-2 text-center text-sm rounded ${getIntensityColor(data?.bookings || 0)}`}
-                      title={`${day} ${hour}: ${data?.bookings} bookings`}
-                    >
-                      {data?.bookings}
-                    </div>
-                  );
-                })}
-              </>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <span>Low</span>
-          <div className="flex gap-1">
-            <div className="w-4 h-4 bg-blue-100 rounded"></div>
-            <div className="w-4 h-4 bg-blue-300 rounded"></div>
-            <div className="w-4 h-4 bg-blue-500 rounded"></div>
-            <div className="w-4 h-4 bg-blue-700 rounded"></div>
-          </div>
-          <span>High</span>
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading analytics...</p>
         </div>
       </div>
     );
-  };
+  }
+
+  const pieChartData = bookingStats?.genreStats.map((stat, index) => ({
+    name: stat.genre,
+    value: Math.round((stat.tickets / bookingStats.totalTickets) * 100),
+    color: ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe'][index % 5]
+  })) || [];
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -174,14 +112,16 @@ const ReportsAnalytics = () => {
               <Filter className="h-4 w-4" />
               Filters
             </Button>
-            <Button className="flex items-center gap-2">
+            <Button 
+              className="flex items-center gap-2"
+              onClick={() => exportData('csv')}
+            >
               <Download className="h-4 w-4" />
-              Export
+              Export CSV
             </Button>
           </div>
         </div>
 
-        {/* Date Range Selector */}
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
@@ -204,30 +144,27 @@ const ReportsAnalytics = () => {
                   className="w-auto"
                 />
               </div>
-              <Button>Apply</Button>
+              <Button onClick={handleDateRangeApply}>Apply</Button>
             </div>
           </CardContent>
         </Card>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="attendance">Attendance</TabsTrigger>
-            <TabsTrigger value="demographics">Demographics</TabsTrigger>
+            <TabsTrigger value="movies">Movies</TabsTrigger>
             <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="custom">Custom Reports</TabsTrigger>
+            <TabsTrigger value="export">Export</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            {/* KPI Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Revenue</p>
-                      <p className="text-2xl font-bold">$127,456</p>
-                      <p className="text-sm text-green-600">+12.3% vs last month</p>
+                      <p className="text-2xl font-bold">${bookingStats?.totalRevenue.toLocaleString() || 0}</p>
                     </div>
                     <DollarSign className="h-8 w-8 text-green-600" />
                   </div>
@@ -239,8 +176,7 @@ const ReportsAnalytics = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Tickets</p>
-                      <p className="text-2xl font-bold">8,432</p>
-                      <p className="text-sm text-blue-600">+8.7% vs last month</p>
+                      <p className="text-2xl font-bold">{bookingStats?.totalTickets.toLocaleString() || 0}</p>
                     </div>
                     <Users className="h-8 w-8 text-blue-600" />
                   </div>
@@ -252,8 +188,7 @@ const ReportsAnalytics = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Avg Occupancy</p>
-                      <p className="text-2xl font-bold">72.4%</p>
-                      <p className="text-sm text-purple-600">+5.2% vs last month</p>
+                      <p className="text-2xl font-bold">{bookingStats?.averageOccupancy || 0}%</p>
                     </div>
                     <TrendingUp className="h-8 w-8 text-purple-600" />
                   </div>
@@ -265,8 +200,7 @@ const ReportsAnalytics = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Unique Visitors</p>
-                      <p className="text-2xl font-bold">3,247</p>
-                      <p className="text-sm text-orange-600">+15.1% vs last month</p>
+                      <p className="text-2xl font-bold">{bookingStats?.uniqueVisitors.toLocaleString() || 0}</p>
                     </div>
                     <MapPin className="h-8 w-8 text-orange-600" />
                   </div>
@@ -274,7 +208,6 @@ const ReportsAnalytics = () => {
               </Card>
             </div>
 
-            {/* Genre Popularity */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -282,7 +215,7 @@ const ReportsAnalytics = () => {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={genrePopularityData}>
+                    <BarChart data={bookingStats?.genreStats || []}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="genre" />
                       <YAxis />
@@ -321,17 +254,41 @@ const ReportsAnalytics = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="attendance" className="space-y-6">
+          <TabsContent value="movies" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Popular Movies</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {bookingStats?.genreStats.map((genre, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{genre.genre}</h4>
+                        <p className="text-sm text-muted-foreground">{genre.tickets} tickets sold</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">${genre.revenue.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Revenue</p>
+                      </div>
+                    </div>
+                  )) || []}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="trends" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Weekly Attendance Pattern</CardTitle>
+                  <CardTitle>Weekly Attendance</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={attendanceData}>
+                    <BarChart data={bookingStats?.weeklyStats || []}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis dataKey="day" />
                       <YAxis />
                       <Tooltip />
                       <Bar dataKey="attendance" fill="#82ca9d" />
@@ -346,7 +303,7 @@ const ReportsAnalytics = () => {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={busyTimesData}>
+                    <LineChart data={bookingStats?.timeStats || []}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="hour" />
                       <YAxis />
@@ -357,226 +314,36 @@ const ReportsAnalytics = () => {
                 </CardContent>
               </Card>
             </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Booking Heatmap</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <HeatmapVisualization />
-              </CardContent>
-            </Card>
           </TabsContent>
 
-          <TabsContent value="demographics" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Age Demographics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {demographicData.map((demo, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          <span className="font-medium w-16">{demo.ageGroup}</span>
-                          <div className="flex-1 bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-primary h-2 rounded-full" 
-                              style={{ width: `${demo.percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div className="text-right ml-4">
-                          <div className="font-medium">{demo.percentage}%</div>
-                          <div className="text-sm text-muted-foreground">{demo.count.toLocaleString()}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Insights</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-primary">67.8%</div>
-                        <div className="text-sm text-muted-foreground">Repeat Customers</div>
-                      </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <div className="text-2xl font-bold text-primary">2.3</div>
-                        <div className="text-sm text-muted-foreground">Avg Visits/Month</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Gender Distribution</h4>
-                      <div className="flex gap-2">
-                        <div className="flex-1 bg-blue-500 h-4 rounded-l-full"></div>
-                        <div className="flex-1 bg-pink-500 h-4 rounded-r-full"></div>
-                      </div>
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Male (52%)</span>
-                        <span>Female (48%)</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="trends" className="space-y-6">
+          <TabsContent value="export" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Seasonal Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={seasonalTrendsData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Line yAxisId="left" type="monotone" dataKey="tickets" stroke="#8884d8" strokeWidth={2} />
-                    <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#82ca9d" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Trends</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">This Quarter</span>
-                      <Badge className="bg-green-500">+15.3%</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">This Month</span>
-                      <Badge className="bg-blue-500">+8.7%</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">This Week</span>
-                      <Badge className="bg-purple-500">+3.2%</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Peak Seasons</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="text-center p-3 bg-red-50 rounded-lg">
-                      <div className="font-bold text-red-600">Summer</div>
-                      <div className="text-sm text-muted-foreground">Highest Revenue</div>
-                    </div>
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <div className="font-bold text-blue-600">Winter</div>
-                      <div className="text-sm text-muted-foreground">Highest Attendance</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Forecasting</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <div className="font-bold text-green-600">Next Month</div>
-                      <div className="text-sm text-muted-foreground">+12% projected</div>
-                    </div>
-                    <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                      <div className="font-bold text-yellow-600">Next Quarter</div>
-                      <div className="text-sm text-muted-foreground">+8% projected</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="custom" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Custom Report Builder</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Report Type</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-background">
-                      <option>Revenue Analysis</option>
-                      <option>Customer Analysis</option>
-                      <option>Movie Performance</option>
-                      <option>Theater Utilization</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Format</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-background">
-                      <option>PDF</option>
-                      <option>Excel</option>
-                      <option>CSV</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Schedule</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-background">
-                      <option>One-time</option>
-                      <option>Daily</option>
-                      <option>Weekly</option>
-                      <option>Monthly</option>
-                    </select>
-                  </div>
-                </div>
-                <Button className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Generate Report
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Saved Reports</CardTitle>
+                <CardTitle>Export Reports</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {customReports.map((report) => (
-                    <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{report.name}</h4>
-                        <p className="text-sm text-muted-foreground">{report.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Last generated: {report.lastGenerated}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{report.format}</Badge>
-                        <Button variant="outline" size="sm">
-                          <Download className="h-3 w-3 mr-1" />
-                          Download
-                        </Button>
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Revenue Report</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Detailed revenue breakdown by movies, theaters, and time periods
+                      </p>
+                      <Button onClick={() => exportData('csv')} className="w-full">
+                        Export as CSV
+                      </Button>
                     </div>
-                  ))}
+                    
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="font-medium mb-2">Attendance Analysis</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Customer attendance patterns and demographic insights
+                      </p>
+                      <Button onClick={() => exportData('csv')} className="w-full">
+                        Export as CSV
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

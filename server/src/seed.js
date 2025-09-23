@@ -35,7 +35,7 @@ const bcrypt = require("bcryptjs");
     const UserSchema = new mongoose.Schema({
       name: String,
       email: { type: String, unique: true },
-      passwordHash: String,
+      password: String,
       role: { type: String, enum: ["admin", "user"], default: "user" },
       createdAt: { type: Date, default: Date.now },
     });
@@ -190,11 +190,11 @@ const bcrypt = require("bcryptjs");
 
     // Users
     const adminPass = await bcrypt.hash("Admin#12345", 10);
-    const userPass = await bcrypt.hash("User#12345", 10);
+    const userPass = await bcrypt.hash("test@12", 10);
 
     await User.insertMany([
-      { name: "Admin", email: "admin@citymate.local", passwordHash: adminPass, role: "admin" },
-      { name: "Test User", email: "user@citymate.local", passwordHash: userPass, role: "user" },
+      { name: "Admin", email: "admin@citymate.local", password: adminPass, role: "admin" },
+      { name: "Test User", email: "test@gmail.com", password: userPass, role: "user" },
     ]);
 
     console.log(`✅ Seed complete: ${insertedMovies.length} movies, 2 users, 0 bookings`);

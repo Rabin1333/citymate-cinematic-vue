@@ -1,16 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Upload, Save, X, BarChart3, Users, Monitor, TrendingUp, MessageSquare, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { movies as initialMovies, Movie } from '@/data/movies';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DashboardOverview } from '@/components/admin/DashboardOverview';
+import { useToast } from '@/hooks/use-toast';
+import { getMovies, createMovie, updateMovie, deleteMovie, getToken, getCurrentUser, toUiMovie, type UiMovie, type ApiMovie } from '@/services/api';
 
 const Admin = () => {
-  const [movies, setMovies] = useState<Movie[]>(initialMovies);
+  const [movies, setMovies] = useState<UiMovie[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingMovie, setEditingMovie] = useState<Movie | null>(null);
+  const [editingMovie, setEditingMovie] = useState<UiMovie | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const { toast } = useToast();
+  const token = getToken();
+  const user = getCurrentUser();
 
   const [formData, setFormData] = useState<{
     title: string;
@@ -42,7 +47,35 @@ const Admin = () => {
     featured: false
   });
 
-  const handleEdit = (movie: Movie) => {
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      toast({
+        title: "Access Denied",
+        description: "You need admin access to view this page.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    fetchMovies();
+  }, []);
+
+  const fetchMovies = async () => {
+    try {
+      const moviesData = await getMovies();
+      setMovies(moviesData);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch movies",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (movie: UiMovie) => {
     setEditingMovie(movie);
     setFormData({
       ...movie,
@@ -52,17 +85,29 @@ const Admin = () => {
     setShowAddForm(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this movie?')) {
-      setMovies(movies.filter(movie => movie.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!token || !window.confirm('Are you sure you want to delete this movie?')) return;
+    
+    try {
+      await deleteMovie(token, id);
+      toast({
+        title: "Success",
+        description: "Movie deleted successfully",
+      });
+      fetchMovies();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete movie",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleSave = () => {
-    if (!formData.title) return;
+  const handleSave = async () => {
+    if (!formData.title || !token) return;
 
-    const movieData: Movie = {
-      id: editingMovie?.id || Date.now(),
+    const movieData: Omit<ApiMovie, '_id'> = {
       title: formData.title || '',
       genre: Array.isArray(formData.genre) ? formData.genre : (typeof formData.genre === 'string' ? formData.genre.split(',').map(g => g.trim()) : []),
       rating: formData.rating || '',
@@ -78,13 +123,30 @@ const Admin = () => {
       featured: formData.featured || false
     };
 
-    if (isEditing && editingMovie) {
-      setMovies(movies.map(movie => movie.id === editingMovie.id ? movieData : movie));
-    } else {
-      setMovies([...movies, movieData]);
+    try {
+      if (isEditing && editingMovie) {
+        await updateMovie(token, editingMovie.id, movieData);
+        toast({
+          title: "Success",
+          description: "Movie updated successfully",
+        });
+      } else {
+        await createMovie(token, movieData);
+        toast({
+          title: "Success",
+          description: "Movie created successfully",
+        });
+      }
+      
+      fetchMovies();
+      resetForm();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save movie",
+        variant: "destructive",
+      });
     }
-
-    resetForm();
   };
 
   const resetForm = () => {
@@ -107,6 +169,17 @@ const Admin = () => {
     setEditingMovie(null);
     setShowAddForm(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading movies...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
