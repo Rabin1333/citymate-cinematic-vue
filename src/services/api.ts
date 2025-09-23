@@ -817,3 +817,85 @@ export async function getUserReviews(page = 1, pageSize = 10): Promise<{ reviews
 
   return res.json();
 }
+
+// Reminders API
+export interface Reminder {
+  _id: string;
+  userId: string;
+  movieId: number;
+  movieTitle: string;
+  releaseDate: string;
+  channels: string[];
+  email?: string;
+  phone?: string;
+  timezone: string;
+  status: 'active' | 'sent' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function createReminder(reminderData: {
+  movieId: number;
+  movieTitle: string;
+  releaseDate: string;
+  channels: string[];
+  email?: string;
+  phone?: string;
+  timezone?: string;
+}): Promise<{ message: string; reminder: Reminder }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/reminders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(reminderData),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to create reminder');
+  }
+
+  return res.json();
+}
+
+export async function getMyReminders(): Promise<Reminder[]> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/reminders/mine`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to fetch reminders');
+  }
+
+  return res.json();
+}
+
+export async function cancelReminder(movieId: number): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/reminders/${movieId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to cancel reminder');
+  }
+
+  return res.json();
+}

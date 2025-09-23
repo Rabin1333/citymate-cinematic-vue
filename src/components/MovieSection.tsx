@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import MovieCard from "./MovieCard";
+import ComingSoonMovieCard from "./ComingSoonMovieCard";
 
 // Support both mock and API movie shapes
 import type { Movie as MockMovie } from "../data/movies";
@@ -12,9 +13,11 @@ interface MovieSectionProps {
   title: string;
   movies: MovieLike[];
   viewAllLink?: string;
+  onReminderSet?: () => void;
 }
 
-const MovieSection = ({ title, movies, viewAllLink }: MovieSectionProps) => {
+const MovieSection = ({ title, movies, viewAllLink, onReminderSet }: MovieSectionProps) => {
+  const isComingSoonSection = title.toLowerCase().includes('coming soon');
   return (
     <section className="py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +41,11 @@ const MovieSection = ({ title, movies, viewAllLink }: MovieSectionProps) => {
               className="animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <MovieCard movie={movie} />
+              {isComingSoonSection ? (
+                <ComingSoonMovieCard movie={movie} onReminderSet={onReminderSet} />
+              ) : (
+                <MovieCard movie={movie} />
+              )}
             </div>
           ))}
         </div>

@@ -4,6 +4,7 @@ import { Menu, X, Film, Settings, LogOut, User } from 'lucide-react';
 import { clearAuth, getCurrentUser } from '../services/api';
 import MovieCountdown from './MovieCountdown';
 import MovieCountdownDropdown from './MovieCountdownDropdown';
+import NavbarCountdown from './NavbarCountdown';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -97,6 +98,7 @@ const Navigation = () => {
           {/* Timer - Only show countdown for non-admin users */}
           <div className="hidden lg:flex items-center space-x-4">
             {/* Countdown components will handle their own visibility based on user role */}
+            <NavbarCountdown />
             <MovieCountdown />
             <MovieCountdownDropdown />
           </div>

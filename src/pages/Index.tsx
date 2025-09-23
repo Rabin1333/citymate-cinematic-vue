@@ -8,6 +8,7 @@ const Index = () => {
   const [comingSoon, setComingSoon] = useState<UiMovie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -53,6 +54,7 @@ const Index = () => {
         title="Coming Soon"
         movies={comingSoon as any}
         viewAllLink="/movies"
+        onReminderSet={() => setRefreshKey(prev => prev + 1)}
       />
     </div>
   );

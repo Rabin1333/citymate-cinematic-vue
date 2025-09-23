@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
 import MovieCard from "../components/MovieCard";
+import ComingSoonMovieCard from "../components/ComingSoonMovieCard";
 import { getMovies, type UiMovie } from "../services/api"; // <-- live API
 
 const Movies = () => {
@@ -9,6 +10,7 @@ const Movies = () => {
   const [movies, setMovies] = useState<UiMovie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // fetch from backend
   useEffect(() => {
@@ -106,15 +108,26 @@ const Movies = () => {
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredMovies.map((movie, index) => (
-            <div
-              key={movie.id} // <-- UiMovie.id (string from Mongo _id)
-              className="animate-fade-in-up"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <MovieCard movie={movie} />
-            </div>
-          ))}
+          {filteredMovies.map((movie, index) => {
+            const isComingSoon = movie.status === 'coming-soon' && movie.releaseDate && new Date(movie.releaseDate) > new Date();
+            
+            return (
+              <div
+                key={movie.id} // <-- UiMovie.id (string from Mongo _id)
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {isComingSoon ? (
+                  <ComingSoonMovieCard 
+                    movie={movie} 
+                    onReminderSet={() => setRefreshKey(prev => prev + 1)} 
+                  />
+                ) : (
+                  <MovieCard movie={movie} />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* No Results */}
