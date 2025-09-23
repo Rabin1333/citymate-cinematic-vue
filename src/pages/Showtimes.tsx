@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Clock, Users, TrendingUp, Zap } from 'lucide-react';
+import { Search, Clock, Users, TrendingUp, Zap, MapPin } from 'lucide-react';
 import { getMovies, type UiMovie } from '@/services/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ const Showtimes = () => {
   const [priceRange, setPriceRange] = useState([10, 30]);
   const [viewMode, setViewMode] = useState<'theater' | 'time'>('theater');
   const [quickFilter, setQuickFilter] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('all');
 
   // Load movies
   useEffect(() => {
@@ -37,11 +38,23 @@ const Showtimes = () => {
     loadMovies();
   }, []);
 
+  const sydneyLocations = [
+    { id: 'all', name: 'All Sydney Areas' },
+    { id: 'cbd', name: 'Sydney CBD' },
+    { id: 'bondi', name: 'Bondi & Eastern Suburbs' },
+    { id: 'parramatta', name: 'Parramatta & West' },
+    { id: 'north-shore', name: 'North Shore' },
+    { id: 'south', name: 'Southern Sydney' },
+    { id: 'inner-west', name: 'Inner West' }
+  ];
+
   const theaters = [
-    { id: 'downtown', name: 'Downtown Cinema', amenities: ['IMAX', 'Parking', 'Dining'] },
-    { id: 'mall', name: 'Mall Cinema', amenities: ['Standard', 'Food Court'] },
-    { id: 'luxury', name: 'Luxury Theater', amenities: ['VIP', 'Recliner', 'Bar'] },
-    { id: 'imax', name: 'IMAX Theater', amenities: ['IMAX', 'Dolby Atmos'] }
+    { id: 'downtown', name: 'Downtown Cinema', location: 'cbd', amenities: ['IMAX', 'Parking', 'Dining'] },
+    { id: 'mall', name: 'Mall Cinema', location: 'parramatta', amenities: ['Standard', 'Food Court'] },
+    { id: 'luxury', name: 'Luxury Theater', location: 'bondi', amenities: ['VIP', 'Recliner', 'Bar'] },
+    { id: 'imax', name: 'IMAX Theater', location: 'cbd', amenities: ['IMAX', 'Dolby Atmos'] },
+    { id: 'bondi-junction', name: 'Bondi Junction Cinema', location: 'bondi', amenities: ['Standard', 'Parking'] },
+    { id: 'north-sydney', name: 'North Sydney Cinema', location: 'north-shore', amenities: ['Premium', 'Dining'] }
   ];
 
   // Filtering
@@ -70,8 +83,13 @@ const Showtimes = () => {
   }, [movies, searchTerm, quickFilter, selectedTimeBlock, priceRange]);
 
   // Helpers
-  const getFilteredTheaters = () =>
-    selectedTheaters.length === 0 ? theaters : theaters.filter(t => selectedTheaters.includes(t.id));
+  const getFilteredTheaters = () => {
+    let filtered = selectedTheaters.length === 0 ? theaters : theaters.filter(t => selectedTheaters.includes(t.id));
+    if (selectedLocation !== 'all') {
+      filtered = filtered.filter(t => t.location === selectedLocation);
+    }
+    return filtered;
+  };
 
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -79,6 +97,7 @@ const Showtimes = () => {
     setSelectedTimeBlock('');
     setSelectedTheaters([]);
     setPriceRange([10, 30]);
+    setSelectedLocation('all');
   };
 
   const activeFiltersCount = [
@@ -86,7 +105,8 @@ const Showtimes = () => {
     quickFilter ? 1 : 0,
     selectedTimeBlock ? 1 : 0,
     selectedTheaters.length > 0 ? 1 : 0,
-    (priceRange[0] > 10 || priceRange[1] < 30) ? 1 : 0
+    (priceRange[0] > 10 || priceRange[1] < 30) ? 1 : 0,
+    selectedLocation !== 'all' ? 1 : 0
   ].reduce((sum, n) => sum + n, 0);
 
   if (loading) {
@@ -123,7 +143,7 @@ const Showtimes = () => {
           </div>
         </div>
 
-        {/* Search + Toggle */}
+        {/* Search + Location + Toggle */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -134,6 +154,26 @@ const Showtimes = () => {
               className="pl-10"
             />
           </div>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="w-64">
+              <SelectValue>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  {sydneyLocations.find(loc => loc.id === selectedLocation)?.name}
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {sydneyLocations.map(location => (
+                <SelectItem key={location.id} value={location.id}>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {location.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as 'theater' | 'time')}>
             <SelectTrigger className="w-48">
               <SelectValue />

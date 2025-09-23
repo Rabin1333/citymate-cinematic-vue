@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Film, Settings, LogOut, User } from 'lucide-react';
+import { Menu, X, Film, Settings, LogOut, User } from 'lucide-react';
 import { clearAuth, getCurrentUser } from '../services/api';
 import MovieCountdown from './MovieCountdown';
 import MovieCountdownDropdown from './MovieCountdownDropdown';
@@ -94,15 +94,11 @@ const Navigation = () => {
             )}
           </nav>
 
-          {/* Timer & Search - Only show countdown for non-admin users */}
+          {/* Timer - Only show countdown for non-admin users */}
           <div className="hidden lg:flex items-center space-x-4">
             {/* Countdown components will handle their own visibility based on user role */}
             <MovieCountdown />
             <MovieCountdownDropdown />
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <input type="text" placeholder="Search movies..." className="input-cinema pl-10 w-64" />
-            </div>
           </div>
 
           {/* Mobile menu button */}
@@ -174,15 +170,11 @@ const Navigation = () => {
                 </div>
               )}
 
-              {/* Mobile Timer & Search - Only show for non-admin users */}
+              {/* Mobile Timer - Only show for non-admin users */}
               <div className="px-3 py-2 space-y-3">
                 {/* Countdown components will handle their own visibility */}
                 <div className="flex items-center justify-center">
                   <MovieCountdownDropdown />
-                </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <input type="text" placeholder="Search movies..." className="input-cinema pl-10 w-full" />
                 </div>
               </div>
             </div>
