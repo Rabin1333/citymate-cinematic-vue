@@ -2,7 +2,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { CheckCircle, Download, Mail, Calendar, QrCode, Home, Loader2 } from 'lucide-react';
-import { getToken } from '@/services/api';
+import { getBookingById } from '@/services/api';
 
 interface BookingData {
   _id: string;
@@ -29,22 +29,13 @@ const Confirmation = () => {
 
   useEffect(() => {
     const fetchBooking = async () => {
-      const token = getToken();
-      if (!token || !id) {
+      if (!id) {
         navigate('/');
         return;
       }
 
       try {
-        const res = await fetch(`http://localhost:4000/api/bookings/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch booking');
-        
-        const data = await res.json();
+        const data = await getBookingById(id);
         setBooking(data);
       } catch (error) {
         console.error('Error:', error);

@@ -43,7 +43,7 @@ const App = () => (
                 <SeatSelection />
               </RequireAuth>
             } />
-            <Route path="payment/:id" element={
+            <Route path="payment" element={
               <RequireAuth>
                 <Payment />
               </RequireAuth>

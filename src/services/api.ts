@@ -484,6 +484,19 @@ export async function createBooking(token: string, payload: CreateBookingBody): 
   return res.json();
 }
 
+export async function getBookingById(bookingId: string): Promise<any> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/bookings/${bookingId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch booking (${res.status})`);
+  return res.json();
+}
+
 /** ----------------- Admin Movie Management ----------------- **/
 export type CreateMovieBody = {
   title: string;

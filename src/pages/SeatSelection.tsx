@@ -4,6 +4,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Monitor } from "lucide-react";
 import { getMovies, createBooking } from "../services/api"; // <-- API calls
 import type { UiMovie } from "../services/api";
+import { useToast } from "@/hooks/use-toast";
 
 type SeatType = "regular" | "premium" | "vip";
 type SeatStatus = "available" | "selected" | "booked";
@@ -26,6 +27,7 @@ const SeatSelection = () => {
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   
   console.log("Search params:", {
     date: searchParams.get("date"),
@@ -138,7 +140,11 @@ const SeatSelection = () => {
   const handleProceedToPayment = async () => {
     if (!movie) return;
     if (!time) {
-      alert("Please choose a showtime first.");
+      toast({
+        title: "Showtime Required",
+        description: "Please choose a showtime first.",
+        variant: "destructive",
+      });
       return;
     }
     if (selectedSeats.length === 0) return;
@@ -161,14 +167,23 @@ const SeatSelection = () => {
         cinema: cinema // optional field
       };
       
-      // Call createBooking with the correct signature
-      await createBooking(token, payload);
+      // Call createBooking with the correct signature - get the booking ID
+      const response = await createBooking(token, payload);
       
-      // Navigate to payment page
-      navigate(`/payment/${movie.id}?seats=${seatIds.join(",")}&date=${date}&time=${time}&cinema=${cinema}&total=${totalPrice}`);
+      toast({
+        title: "Booking Created",
+        description: "Redirecting to payment...",
+      });
+      
+      // Navigate to payment page with booking ID
+      navigate(`/payment?bookingId=${response._id}`);
     } catch (err) {
       console.error(err);
-      alert("Booking failed. Please try again.");
+      toast({
+        title: "Booking Failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

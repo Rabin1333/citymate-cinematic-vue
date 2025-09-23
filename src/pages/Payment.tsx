@@ -1,40 +1,56 @@
-// src/pages/Payment.tsx
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { getMovieById } from "../services/api";
-import type { UiMovie } from "../services/api";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { getBookingById } from "../services/api";
+import { useToast } from "@/hooks/use-toast";
+
+interface BookingData {
+  _id: string;
+  movieId: {
+    _id: string;
+    title: string;
+    poster: string;
+    rating: string;
+    duration: string;
+  };
+  showtime: string;
+  seats: string[];
+  cinema: string;
+  bookingReference: string;
+  totalAmount: number;
+  createdAt: string;
+}
 
 const Payment = () => {
-  const { id } = useParams(); // movie id (string, Mongo _id)
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
 
-  const [movie, setMovie] = useState<UiMovie | null>(null);
+  const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Read query params sent from SeatSelection
-  const seatsParam = searchParams.get("seats") || "";
-  const date = searchParams.get("date") || "Today";
-  const time = searchParams.get("time") || "";
-  const cinema = searchParams.get("cinema") || "Downtown Cinema";
-  const total = searchParams.get("total") || "0";
-
-  const seats = useMemo(() => {
-    return seatsParam ? seatsParam.split(",").filter(Boolean) : [];
-  }, [seatsParam]);
+  const bookingId = searchParams.get("bookingId");
 
   useEffect(() => {
-    if (!id) return;
+    if (!bookingId) {
+      navigate("/");
+      return;
+    }
     
     let alive = true;
     (async () => {
       try {
-        // Use getMovieById for better performance (single API call)
-        const movie = await getMovieById(id);
-        if (alive) setMovie(movie);
+        const bookingData = await getBookingById(bookingId);
+        if (alive) setBooking(bookingData);
       } catch (e) {
-        console.error("Failed to load movie on Payment page", e);
-        if (alive) setMovie(null);
+        console.error("Failed to load booking on Payment page", e);
+        if (alive) {
+          toast({
+            title: "Booking Not Found",
+            description: "The booking could not be loaded.",
+            variant: "destructive",
+          });
+          navigate("/");
+        }
       } finally {
         if (alive) setLoading(false);
       }
@@ -42,18 +58,20 @@ const Payment = () => {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [bookingId, navigate, toast]);
 
   if (loading) return <div className="p-8">Loading…</div>;
-  if (!movie) {
+  if (!booking) {
     return (
       <div className="p-8">
-        <h2 className="text-xl font-bold mb-2">Movie not found</h2>
-        <p className="mb-4">The movie you're trying to pay for could not be loaded.</p>
+        <h2 className="text-xl font-bold mb-2">Booking not found</h2>
+        <p className="mb-4">The booking you're trying to pay for could not be loaded.</p>
         <button className="btn-cinema" onClick={() => navigate("/")}>Go Home</button>
       </div>
     );
   }
+
+  const bookingDate = new Date(booking.createdAt).toLocaleDateString();
 
   return (
     <div className="min-h-screen py-8">
@@ -65,40 +83,36 @@ const Payment = () => {
         <div className="bg-card rounded-2xl p-6 border border-border space-y-4">
           <div className="flex items-center gap-4">
             <img
-              src={movie.poster}
-              alt={movie.title}
+              src={booking.movieId.poster}
+              alt={booking.movieId.title}
               className="w-20 h-28 object-cover rounded-lg"
             />
             <div>
-              <h2 className="text-xl font-semibold text-foreground">{movie.title}</h2>
+              <h2 className="text-xl font-semibold text-foreground">{booking.movieId.title}</h2>
               <p className="text-foreground-secondary">
-                {cinema} • {date} • {time}
+                {booking.cinema} • {bookingDate} • {booking.showtime}
               </p>
             </div>
           </div>
 
           <div>
             <h3 className="font-semibold mb-2 text-foreground">Seats</h3>
-            {seats.length ? (
-              <p className="text-foreground">{seats.join(", ")}</p>
-            ) : (
-              <p className="text-foreground-secondary">No seats selected</p>
-            )}
+            <p className="text-foreground">{booking.seats.join(", ")}</p>
           </div>
 
           <div className="flex justify-between text-lg font-bold">
             <span className="text-foreground">Total</span>
-            <span className="text-cinema-red">${total}</span>
+            <span className="text-cinema-red">${booking.totalAmount}</span>
           </div>
 
-          {/* Stub payment action (Iteration-2: no real gateway needed) */}
           <button
             className="btn-cinema w-full"
             onClick={() => {
-              // You already created the booking before navigating here.
-              // For Iteration-2, it's enough to show a "success" and route home.
-              alert("Payment simulated — booking confirmed!");
-              navigate("/");
+              toast({
+                title: "Payment Confirmed",
+                description: "Your booking has been confirmed!",
+              });
+              navigate(`/confirmation/${booking._id}`);
             }}
           >
             Pay Now
