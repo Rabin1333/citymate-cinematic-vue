@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Calendar, Clock, MapPin, Star, Play } from "lucide-react";
 import { getMovieById, getShowtimes, type UiMovie } from "../services/api";
 import { MovieReviewsSection } from "@/components/MovieReviewsSection";
+import PredictThePlotSection from "@/components/PredictThePlotSection";
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -246,6 +247,16 @@ const MovieDetails = () => {
               </button>
             </div>
           </div>
+        </div>
+        
+        {/* Predict-the-Plot Section */}
+        <div className="mt-8">
+          <PredictThePlotSection
+            movieId={movie.id}
+            movieTitle={movie.title}
+            isReleased={movie.status === 'now-showing'}
+            releaseDate={movie.releaseDate}
+          />
         </div>
         
         {/* Reviews Section */}

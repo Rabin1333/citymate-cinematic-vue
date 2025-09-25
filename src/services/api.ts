@@ -1039,3 +1039,152 @@ export async function getAuditoriumPreviews(auditoriumId: string): Promise<Audit
   }
   return res.json();
 }
+
+/** ----------------- Predictions System ----------------- **/
+export interface Prediction {
+  _id: string;
+  predictionText: string;
+  createdAt: string;
+  updatedAt: string;
+  isWinner: boolean;
+  movieId?: {
+    _id: string;
+    title: string;
+    poster: string;
+    status: string;
+    releaseDate?: string;
+  };
+  rewardId?: {
+    rewardType: string;
+    rewardValue: string;
+    rewardDetails: string;
+    status: string;
+  };
+}
+
+export interface PredictionStats {
+  totalPredictions: number;
+  winningPredictions: number;
+  recentPredictions: number;
+  winRate: string;
+}
+
+export async function createPrediction(movieId: string, predictionText: string): Promise<{ message: string; prediction: Prediction }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/predictions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ movieId, predictionText }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || `Failed to create prediction (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function getMyPredictions(page = 1, limit = 10): Promise<{ predictions: Prediction[]; pagination: any }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString()
+  });
+
+  const res = await fetch(`${BASE}/api/predictions/my?${params}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch user predictions (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function getMoviePredictions(movieId: string, page = 1, limit = 20): Promise<{ predictions: any[]; pagination: any }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString()
+  });
+
+  const res = await fetch(`${BASE}/api/predictions/movie/${movieId}?${params}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch movie predictions (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function markPredictionWinner(predictionId: string): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/predictions/${predictionId}/winner`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || `Failed to mark prediction as winner (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function deletePrediction(predictionId: string): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/predictions/${predictionId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || `Failed to delete prediction (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function getPredictionStats(): Promise<PredictionStats> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/predictions/stats`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch prediction statistics (${res.status})`);
+  }
+
+  return res.json();
+}

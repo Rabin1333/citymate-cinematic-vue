@@ -3,9 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingSection } from "@/components/profile/BookingSection";
 import { ProfileSection } from "@/components/profile/ProfileSection";
 import { SettingsSection } from "@/components/profile/SettingsSection";
+import PredictionsSection from "@/components/profile/PredictionsSection";
 import MyRewards from "./MyRewards";
 import MyReviews from "./MyReviews";
-import { User, BookOpen, Settings, Gift, Star } from "lucide-react";
+import { User, BookOpen, Settings, Gift, Star, Lightbulb } from "lucide-react";
 
 const UserProfile = () => {
   return (
@@ -17,7 +18,7 @@ const UserProfile = () => {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profile
@@ -33,6 +34,10 @@ const UserProfile = () => {
             <TabsTrigger value="reviews" className="flex items-center gap-2">
               <Star className="h-4 w-4" />
               Reviews
+            </TabsTrigger>
+            <TabsTrigger value="predictions" className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4" />
+              Predictions
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -54,6 +59,10 @@ const UserProfile = () => {
 
           <TabsContent value="reviews" className="mt-6">
             <MyReviews />
+          </TabsContent>
+
+          <TabsContent value="predictions" className="mt-6">
+            <PredictionsSection />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
