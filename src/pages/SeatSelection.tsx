@@ -1,10 +1,11 @@
 // src/pages/SeatSelection.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Monitor } from "lucide-react";
+import { ArrowLeft, Monitor, Eye } from "lucide-react";
 import { getMovies, createBooking } from "../services/api"; // <-- API calls
 import type { UiMovie } from "../services/api";
 import { useToast } from "@/hooks/use-toast";
+import SeatPreviewModal from "@/components/SeatPreviewModal";
 
 type SeatType = "regular" | "premium" | "vip";
 type SeatStatus = "available" | "selected" | "booked";
@@ -38,6 +39,8 @@ const SeatSelection = () => {
   const [movie, setMovie] = useState<UiMovie | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewZone, setPreviewZone] = useState<{ zoneId: string; zoneName: string } | null>(null);
   const date = searchParams.get("date") ?? "Today";
   const time = searchParams.get("time") ?? "";
   const cinema = searchParams.get("cinema") ?? "Downtown Cinema";
@@ -136,6 +139,24 @@ const SeatSelection = () => {
 
   const totalPrice = selectedSeats.reduce((sum, s) => sum + s.price, 0);
 
+  // Handle seat preview
+  const handlePreviewSeat = (seatType: SeatType) => {
+    const zoneMap = {
+      regular: { zoneId: "regular", zoneName: "Regular" },
+      premium: { zoneId: "premium", zoneName: "Premium" },
+      vip: { zoneId: "vip", zoneName: "VIP" }
+    };
+    
+    const zone = zoneMap[seatType];
+    setPreviewZone(zone);
+    setPreviewModalOpen(true);
+  };
+
+  const getAuditoriumId = () => {
+    // Create auditorium ID based on cinema and screen
+    return `${cinema.toLowerCase().replace(/\s+/g, '-')}-screen-1`;
+  };
+
   // --- Step 6: Create booking via API ---
   const handleProceedToPayment = async () => {
     if (!movie) return;
@@ -218,7 +239,7 @@ const SeatSelection = () => {
                 </div>
               </div>
 
-              {/* Legend */}
+              {/* Legend with Preview Buttons */}
               <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded-t"></div>
@@ -235,10 +256,37 @@ const SeatSelection = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded-t"></div>
                   <span className="text-foreground-secondary">Premium</span>
+                  <button
+                    onClick={() => handlePreviewSeat("premium")}
+                    className="ml-1 p-1 text-blue-600 hover:text-blue-800 transition-colors"
+                    title="Preview Premium seats"
+                    aria-label="Preview Premium seating area"
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-amber-100 border border-amber-300 rounded-t"></div>
                   <span className="text-foreground-secondary">VIP</span>
+                  <button
+                    onClick={() => handlePreviewSeat("vip")}
+                    className="ml-1 p-1 text-amber-600 hover:text-amber-800 transition-colors"
+                    title="Preview VIP seats"
+                    aria-label="Preview VIP seating area"
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground-secondary">Regular</span>
+                  <button
+                    onClick={() => handlePreviewSeat("regular")}
+                    className="ml-1 p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                    title="Preview Regular seats"
+                    aria-label="Preview Regular seating area"
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
 
@@ -346,6 +394,20 @@ const SeatSelection = () => {
             </div>
           </div>
         </div>
+
+        {/* Seat Preview Modal */}
+        {previewZone && (
+          <SeatPreviewModal
+            isOpen={previewModalOpen}
+            onClose={() => {
+              setPreviewModalOpen(false);
+              setPreviewZone(null);
+            }}
+            auditoriumId={getAuditoriumId()}
+            zoneId={previewZone.zoneId}
+            zoneName={previewZone.zoneName}
+          />
+        )}
       </div>
     </div>
   );

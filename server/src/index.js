@@ -29,6 +29,7 @@ const reviewsRouter = require("./routes/reviews");
 const remindersRouter = require("./routes/reminders");
 const foodRouter = require("./routes/food");
 const parkingRouter = require("./routes/parking");
+const auditoriumsRouter = require("./routes/auditoriums");
 
 app.use("/api/movies", moviesRouter);
 app.use("/api/showtimes", showtimesRouter);
@@ -42,6 +43,7 @@ app.use("/api/reviews", reviewsRouter);
 app.use("/api/reminders", remindersRouter);
 app.use("/api/food", foodRouter);
 app.use("/api/parking", parkingRouter);
+app.use("/api/auditoriums", auditoriumsRouter);
 
 const PORT = process.env.PORT || 4000;
 connectDB().then(() => {

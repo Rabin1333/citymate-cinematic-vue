@@ -66,11 +66,20 @@ const bcrypt = require("bcryptjs");
       active: { type: Boolean, default: true }
     });
 
+    const AuditoriumPreviewSchema = new mongoose.Schema({
+      auditoriumId: String,
+      zoneId: String,
+      url360: String,
+      description: String,
+      active: { type: Boolean, default: true }
+    });
+
     const Movie = mongoose.model("Movie", MovieSchema);
     const User = mongoose.model("User", UserSchema);
     const Booking = mongoose.model("Booking", BookingSchema);
     const FoodItem = mongoose.model("FoodItem", FoodItemSchema);
     const ParkingLot = mongoose.model("ParkingLot", ParkingLotSchema);
+    const AuditoriumPreview = mongoose.model("AuditoriumPreview", AuditoriumPreviewSchema);
 
     // ——— Clean old data (safe for dev) ———
     await Promise.all([Movie.deleteMany({}), User.deleteMany({}), Booking.deleteMany({})]);
@@ -249,7 +258,16 @@ const bcrypt = require("bcryptjs");
 
     await ParkingLot.insertMany(parkingLots);
 
-    console.log(`✅ Seed complete: ${insertedMovies.length} movies, 2 users, ${foodItems.length} food items, ${parkingLots.length} parking lots, 0 bookings`);
+    // Auditorium Previews (360° views for different seat zones)
+    const auditoriumPreviews = [
+      { auditoriumId: "downtown-screen-1", zoneId: "regular", url360: "/assets/360/regular-view.jpg", description: "View from regular seating area" },
+      { auditoriumId: "downtown-screen-1", zoneId: "premium", url360: "/assets/360/premium-view.jpg", description: "View from premium seating area with elevated perspective" },
+      { auditoriumId: "downtown-screen-1", zoneId: "vip", url360: "/assets/360/vip-view.jpg", description: "View from VIP seating with optimal screen viewing angle" }
+    ];
+
+    await AuditoriumPreview.insertMany(auditoriumPreviews);
+
+    console.log(`✅ Seed complete: ${insertedMovies.length} movies, 2 users, ${foodItems.length} food items, ${parkingLots.length} parking lots, ${auditoriumPreviews.length} auditorium previews, 0 bookings`);
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {

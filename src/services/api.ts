@@ -1021,3 +1021,21 @@ export async function releaseParking(reservationId: string): Promise<{ message: 
 
   return res.json();
 }
+
+/** ----------------- Auditorium Previews ----------------- **/
+export interface AuditoriumPreview {
+  zoneId: string;
+  url360: string;
+  description: string;
+}
+
+export async function getAuditoriumPreviews(auditoriumId: string): Promise<AuditoriumPreview[]> {
+  const res = await fetch(`${BASE}/api/auditoriums/${encodeURIComponent(auditoriumId)}/previews`);
+  if (!res.ok) {
+    if (res.status === 404) {
+      return []; // Return empty array if auditorium not found
+    }
+    throw new Error(`Failed to fetch auditorium previews (${res.status})`);
+  }
+  return res.json();
+}
