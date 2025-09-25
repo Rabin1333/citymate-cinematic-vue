@@ -29,6 +29,14 @@ interface BookingData {
     quantity: number;
     price: number;
   }>;
+  parkingReservation?: {
+    lotName: string;
+    location: string;
+    startTime: string;
+    endTime: string;
+    price: number;
+    reservationId: string;
+  };
 }
 
 const Confirmation = () => {
@@ -176,6 +184,41 @@ const Confirmation = () => {
                         <p className="text-sm text-foreground-secondary">
                           🍿 Your food will be ready for pickup at the concession counter. 
                           Show this confirmation to collect your order.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Parking Section */}
+                  {booking.parkingReservation && (
+                    <div className="border-t border-border pt-4">
+                      <h4 className="font-medium text-foreground mb-3">Parking Reservation</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-foreground-secondary">Location</span>
+                          <span className="text-foreground">{booking.parkingReservation.lotName}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-foreground-secondary">Address</span>
+                          <span className="text-foreground">{booking.parkingReservation.location}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-foreground-secondary">Duration</span>
+                          <span className="text-foreground">
+                            {new Date(booking.parkingReservation.startTime).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })} - {new Date(booking.parkingReservation.endTime).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-foreground-secondary">Cost</span>
+                          <span className="text-foreground">${booking.parkingReservation.price.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-700">
+                          🅿️ Parking Code: <span className="font-mono font-semibold">{booking.parkingReservation.reservationId.slice(-8).toUpperCase()}</span>
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Show this code at the parking entrance or use the QR code below.
                         </p>
                       </div>
                     </div>

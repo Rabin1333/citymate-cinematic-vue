@@ -923,3 +923,101 @@ export async function cancelReminder(movieId: number): Promise<{ message: string
 
   return res.json();
 }
+
+/** ----------------- Parking Integration ----------------- **/
+export interface ParkingLot {
+  lotId: string;
+  name: string;
+  location: string;
+  available: number;
+  capacity: number;
+  priceHint: string;
+}
+
+export interface ParkingReservation {
+  reservationId: string;
+  lotName: string;
+  location: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+  holdExpiresAt: string;
+}
+
+export async function getParkingLots(cinemaId: string, showtimeISO: string): Promise<ParkingLot[]> {
+  const params = new URLSearchParams({ cinemaId, showtime: showtimeISO });
+  const res = await fetch(`${BASE}/api/parking/lots?${params}`);
+  if (!res.ok) throw new Error(`Failed to fetch parking lots (${res.status})`);
+  return res.json();
+}
+
+export async function holdParking(
+  bookingId: string, 
+  lotId: string, 
+  startISO: string, 
+  endISO: string
+): Promise<ParkingReservation> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/parking/reservations/hold`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      bookingId,
+      lotId,
+      startTime: startISO,
+      endTime: endISO
+    }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || `Failed to hold parking (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function confirmParking(reservationId: string, bookingId: string): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/parking/reservations/${reservationId}/confirm`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ bookingId }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || `Failed to confirm parking (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function releaseParking(reservationId: string): Promise<{ message: string }> {
+  const token = getToken();
+  if (!token) throw new Error('No authentication token');
+
+  const res = await fetch(`${BASE}/api/parking/reservations/${reservationId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || `Failed to release parking (${res.status})`);
+  }
+
+  return res.json();
+}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getBookingById, spinReward, createBooking, getToken, type FoodOrderItem } from "../services/api";
+import { getBookingById, spinReward, createBooking, getToken, confirmParking, releaseParking, type FoodOrderItem, type ParkingReservation } from "../services/api";
 import { useToast } from "@/hooks/use-toast";
 import SpinWheelModal from "@/components/SpinWheelModal";
 import FoodMenu from "@/components/FoodMenu";
+import ParkingSection from "@/components/ParkingSection";
 
 interface BookingData {
   _id: string;
@@ -31,6 +32,7 @@ const Payment = () => {
   const [loading, setLoading] = useState(true);
   const [showSpinModal, setShowSpinModal] = useState(false);
   const [selectedFood, setSelectedFood] = useState<FoodOrderItem[]>([]);
+  const [parkingReservation, setParkingReservation] = useState<ParkingReservation | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
 
   const bookingId = searchParams.get("bookingId");
@@ -95,6 +97,9 @@ const Payment = () => {
     const token = getToken();
     
     try {
+      // Process payment first
+      let finalBookingId = booking._id;
+      
       // If there are food items, create a new booking with food
       if (selectedFood.length > 0) {
         const updatedBooking = await createBooking(token!, {
@@ -104,35 +109,46 @@ const Payment = () => {
           cinema: booking.cinema,
           foodItems: selectedFood
         });
-        
-        toast({
-          title: "Payment Confirmed",
-          description: "Your booking with food items has been confirmed!",
-        });
+        finalBookingId = updatedBooking._id;
+      }
 
-        // Check if eligible for spin wheel
-        const isEligible = checkPremiumEligibility(booking.seats);
-        if (isEligible) {
-          setShowSpinModal(true);
-        } else {
-          navigate(`/confirmation/${updatedBooking._id}`);
-        }
-      } else {
-        // Original flow without food
-        toast({
-          title: "Payment Confirmed",
-          description: "Your booking has been confirmed!",
-        });
-
-        // Check if eligible for spin wheel
-        const isEligible = checkPremiumEligibility(booking.seats);
-        if (isEligible) {
-          setShowSpinModal(true);
-        } else {
-          navigate(`/confirmation/${booking._id}`);
+      // Confirm parking if reserved
+      if (parkingReservation) {
+        try {
+          await confirmParking(parkingReservation.reservationId, finalBookingId);
+        } catch (parkingError) {
+          console.error('Failed to confirm parking:', parkingError);
+          // Don't fail the entire payment for parking confirmation failure
+          toast({
+            title: "Payment Confirmed",
+            description: "Booking confirmed, but parking confirmation failed. Please contact support.",
+            variant: "destructive",
+          });
         }
       }
+      
+      toast({
+        title: "Payment Confirmed",
+        description: "Your booking has been confirmed!",
+      });
+
+      // Check if eligible for spin wheel
+      const isEligible = checkPremiumEligibility(booking.seats);
+      if (isEligible) {
+        setShowSpinModal(true);
+      } else {
+        navigate(`/confirmation/${finalBookingId}`);
+      }
     } catch (error) {
+      // If payment fails, release parking hold
+      if (parkingReservation) {
+        try {
+          await releaseParking(parkingReservation.reservationId);
+        } catch (releaseError) {
+          console.error('Failed to release parking after payment failure:', releaseError);
+        }
+      }
+      
       toast({
         title: "Payment Failed",
         description: "Please try again.",
@@ -194,10 +210,19 @@ const Payment = () => {
                 <span className="text-foreground">${selectedFood.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</span>
               </div>
             )}
+            {parkingReservation && (
+              <div className="flex justify-between">
+                <span className="text-foreground">Parking</span>
+                <span className="text-foreground">${parkingReservation.price.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold border-t border-border pt-2">
               <span className="text-foreground">Total</span>
               <span className="text-cinema-red">
-                ${(booking.totalAmount + selectedFood.reduce((sum, item) => sum + item.price, 0)).toFixed(2)}
+                ${(booking.totalAmount + 
+                   selectedFood.reduce((sum, item) => sum + item.price, 0) + 
+                   (parkingReservation?.price || 0)
+                ).toFixed(2)}
               </span>
             </div>
           </div>
@@ -216,6 +241,16 @@ const Payment = () => {
           <FoodMenu 
             selectedItems={selectedFood}
             onSelectionChange={setSelectedFood}
+          />
+        </div>
+
+        {/* Parking Section */}
+        <div className="mt-8">
+          <ParkingSection
+            bookingId={booking._id}
+            cinema={booking.cinema}
+            showtime={booking.showtime}
+            onParkingChange={setParkingReservation}
           />
         </div>
 

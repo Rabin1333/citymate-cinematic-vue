@@ -57,10 +57,20 @@ const bcrypt = require("bcryptjs");
       available: { type: Boolean, default: true }
     });
 
+    const ParkingLotSchema = new mongoose.Schema({
+      cinemaId: String,
+      name: String,
+      capacity: Number,
+      pricePerHour: Number,
+      location: String,
+      active: { type: Boolean, default: true }
+    });
+
     const Movie = mongoose.model("Movie", MovieSchema);
     const User = mongoose.model("User", UserSchema);
     const Booking = mongoose.model("Booking", BookingSchema);
     const FoodItem = mongoose.model("FoodItem", FoodItemSchema);
+    const ParkingLot = mongoose.model("ParkingLot", ParkingLotSchema);
 
     // ——— Clean old data (safe for dev) ———
     await Promise.all([Movie.deleteMany({}), User.deleteMany({}), Booking.deleteMany({})]);
@@ -229,7 +239,17 @@ const bcrypt = require("bcryptjs");
 
     await FoodItem.insertMany(foodItems);
 
-    console.log(`✅ Seed complete: ${insertedMovies.length} movies, 2 users, ${foodItems.length} food items, 0 bookings`);
+    // Parking Lots
+    const parkingLots = [
+      { cinemaId: "downtown", name: "Main Street Parking", capacity: 150, pricePerHour: 5, location: "Adjacent to cinema entrance" },
+      { cinemaId: "downtown", name: "Underground Garage", capacity: 200, pricePerHour: 6, location: "Basement level, elevator access" },
+      { cinemaId: "downtown", name: "Rooftop Parking", capacity: 100, pricePerHour: 4, location: "Rooftop level, outdoor parking" },
+      { cinemaId: "downtown", name: "VIP Reserved", capacity: 25, pricePerHour: 8, location: "Premium spots near VIP entrance" }
+    ];
+
+    await ParkingLot.insertMany(parkingLots);
+
+    console.log(`✅ Seed complete: ${insertedMovies.length} movies, 2 users, ${foodItems.length} food items, ${parkingLots.length} parking lots, 0 bookings`);
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
