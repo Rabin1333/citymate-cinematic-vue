@@ -34,6 +34,20 @@ const BookingSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  foodItems: [{
+    itemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FoodItem"
+    },
+    quantity: {
+      type: Number,
+      min: 1
+    },
+    price: {
+      type: Number,
+      min: 0
+    }
+  }],
   totalAmount: {
     type: Number,
     default: 0

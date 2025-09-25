@@ -19,6 +19,16 @@ interface BookingData {
   bookingReference: string;
   totalAmount: number;
   createdAt: string;
+  foodItems?: Array<{
+    itemId: {
+      _id: string;
+      name: string;
+      price: number;
+      category: string;
+    };
+    quantity: number;
+    price: number;
+  }>;
 }
 
 const Confirmation = () => {
@@ -147,6 +157,29 @@ const Confirmation = () => {
                       <div className="font-medium text-foreground">{booking.seats.join(', ')}</div>
                     </div>
                   </div>
+
+                  {/* Food Items Section */}
+                  {booking.foodItems && booking.foodItems.length > 0 && (
+                    <div className="border-t border-border pt-4">
+                      <h4 className="font-medium text-foreground mb-3">Food Pre-order</h4>
+                      <div className="space-y-2">
+                        {booking.foodItems.map((item, index) => (
+                          <div key={index} className="flex justify-between text-sm">
+                            <span className="text-foreground-secondary">
+                              {item.quantity}x {item.itemId.name}
+                            </span>
+                            <span className="text-foreground">${item.price.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 p-3 bg-cinema-red/10 rounded-lg">
+                        <p className="text-sm text-foreground-secondary">
+                          🍿 Your food will be ready for pickup at the concession counter. 
+                          Show this confirmation to collect your order.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="border-t border-border pt-4">
                     <div className="flex justify-between items-center">

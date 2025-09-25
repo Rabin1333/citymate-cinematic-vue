@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getBookingById, spinReward } from "../services/api";
+import { getBookingById, spinReward, createBooking, getToken, type FoodOrderItem } from "../services/api";
 import { useToast } from "@/hooks/use-toast";
 import SpinWheelModal from "@/components/SpinWheelModal";
+import FoodMenu from "@/components/FoodMenu";
 
 interface BookingData {
   _id: string;
@@ -29,6 +30,8 @@ const Payment = () => {
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSpinModal, setShowSpinModal] = useState(false);
+  const [selectedFood, setSelectedFood] = useState<FoodOrderItem[]>([]);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const bookingId = searchParams.get("bookingId");
 
@@ -85,20 +88,58 @@ const Payment = () => {
     return premiumSeats.length >= 3;
   };
 
-  const handlePayment = () => {
-    if (!booking) return;
+  const handlePayment = async () => {
+    if (!booking || processingPayment) return;
 
-    toast({
-      title: "Payment Confirmed",
-      description: "Your booking has been confirmed!",
-    });
+    setProcessingPayment(true);
+    const token = getToken();
+    
+    try {
+      // If there are food items, create a new booking with food
+      if (selectedFood.length > 0) {
+        const updatedBooking = await createBooking(token!, {
+          movieId: booking.movieId._id,
+          showtime: booking.showtime,
+          seats: booking.seats,
+          cinema: booking.cinema,
+          foodItems: selectedFood
+        });
+        
+        toast({
+          title: "Payment Confirmed",
+          description: "Your booking with food items has been confirmed!",
+        });
 
-    // Check if eligible for spin wheel
-    const isEligible = checkPremiumEligibility(booking.seats);
-    if (isEligible) {
-      setShowSpinModal(true);
-    } else {
-      navigate(`/confirmation/${booking._id}`);
+        // Check if eligible for spin wheel
+        const isEligible = checkPremiumEligibility(booking.seats);
+        if (isEligible) {
+          setShowSpinModal(true);
+        } else {
+          navigate(`/confirmation/${updatedBooking._id}`);
+        }
+      } else {
+        // Original flow without food
+        toast({
+          title: "Payment Confirmed",
+          description: "Your booking has been confirmed!",
+        });
+
+        // Check if eligible for spin wheel
+        const isEligible = checkPremiumEligibility(booking.seats);
+        if (isEligible) {
+          setShowSpinModal(true);
+        } else {
+          navigate(`/confirmation/${booking._id}`);
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Payment Failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -142,17 +183,40 @@ const Payment = () => {
             <p className="text-foreground">{booking.seats.join(", ")}</p>
           </div>
 
-          <div className="flex justify-between text-lg font-bold">
-            <span className="text-foreground">Total</span>
-            <span className="text-cinema-red">${booking.totalAmount}</span>
+          <div className="border-t border-border pt-4 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-foreground">Seats</span>
+              <span className="text-foreground">${booking.totalAmount}</span>
+            </div>
+            {selectedFood.length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-foreground">Food</span>
+                <span className="text-foreground">${selectedFood.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg font-bold border-t border-border pt-2">
+              <span className="text-foreground">Total</span>
+              <span className="text-cinema-red">
+                ${(booking.totalAmount + selectedFood.reduce((sum, item) => sum + item.price, 0)).toFixed(2)}
+              </span>
+            </div>
           </div>
 
           <button
             className="btn-cinema w-full"
             onClick={handlePayment}
+            disabled={processingPayment}
           >
-            Pay Now
+            {processingPayment ? "Processing..." : "Pay Now"}
           </button>
+        </div>
+
+        {/* Food Pre-ordering Section */}
+        <div className="mt-8">
+          <FoodMenu 
+            selectedItems={selectedFood}
+            onSelectionChange={setSelectedFood}
+          />
         </div>
 
         <SpinWheelModal

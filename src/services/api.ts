@@ -463,12 +463,36 @@ export function clearAuth() {
   localStorage.removeItem("user");
 }
 
+/** ----------------- Food Items ----------------- **/
+export interface FoodItem {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: "snacks" | "drinks" | "combos";
+  image: string;
+  available: boolean;
+}
+
+export interface FoodOrderItem {
+  itemId: string;
+  quantity: number;
+  price: number;
+}
+
+export async function getFoodItems(): Promise<FoodItem[]> {
+  const res = await fetch(`${BASE}/api/food`);
+  if (!res.ok) throw new Error(`Failed to fetch food items (${res.status})`);
+  return res.json();
+}
+
 /** ----------------- Bookings ----------------- **/
 export type CreateBookingBody = {
   movieId: string;
   showtime: string;
   seats: string[];
   cinema?: string;
+  foodItems?: FoodOrderItem[];
 };
 
 export async function createBooking(token: string, payload: CreateBookingBody): Promise<{ _id: string }> {

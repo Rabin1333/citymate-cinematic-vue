@@ -27,6 +27,7 @@ const adminRouter = require("./routes/admin");
 const rewardsRouter = require("./routes/rewards");    // ADD REWARDS
 const reviewsRouter = require("./routes/reviews");
 const remindersRouter = require("./routes/reminders");
+const foodRouter = require("./routes/food");
 
 app.use("/api/movies", moviesRouter);
 app.use("/api/showtimes", showtimesRouter);
@@ -38,6 +39,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/rewards", rewardsRouter);     // ADD REWARDS
 app.use("/api/reviews", reviewsRouter);
 app.use("/api/reminders", remindersRouter);
+app.use("/api/food", foodRouter);
 
 const PORT = process.env.PORT || 4000;
 connectDB().then(() => {

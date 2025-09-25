@@ -48,9 +48,19 @@ const bcrypt = require("bcryptjs");
       createdAt: { type: Date, default: Date.now },
     });
 
+    const FoodItemSchema = new mongoose.Schema({
+      name: String,
+      description: String,
+      price: Number,
+      category: { type: String, enum: ["snacks", "drinks", "combos"] },
+      image: String,
+      available: { type: Boolean, default: true }
+    });
+
     const Movie = mongoose.model("Movie", MovieSchema);
     const User = mongoose.model("User", UserSchema);
     const Booking = mongoose.model("Booking", BookingSchema);
+    const FoodItem = mongoose.model("FoodItem", FoodItemSchema);
 
     // ——— Clean old data (safe for dev) ———
     await Promise.all([Movie.deleteMany({}), User.deleteMany({}), Booking.deleteMany({})]);
@@ -197,7 +207,29 @@ const bcrypt = require("bcryptjs");
       { name: "Test User", email: "test@gmail.com", password: userPass, role: "user" },
     ]);
 
-    console.log(`✅ Seed complete: ${insertedMovies.length} movies, 2 users, 0 bookings`);
+    // Food Items
+    const foodItems = [
+      // Snacks
+      { name: "Classic Popcorn", description: "Fresh buttered popcorn", price: 8.50, category: "snacks", image: "/food/popcorn.jpg" },
+      { name: "Caramel Popcorn", description: "Sweet caramel-coated popcorn", price: 9.50, category: "snacks", image: "/food/caramel-popcorn.jpg" },
+      { name: "Nachos & Cheese", description: "Crispy nachos with warm cheese sauce", price: 12.00, category: "snacks", image: "/food/nachos.jpg" },
+      { name: "Hot Dog", description: "All-beef hot dog with fixings", price: 9.00, category: "snacks", image: "/food/hotdog.jpg" },
+      
+      // Drinks
+      { name: "Soft Drink (Large)", description: "Coca-Cola, Pepsi, Sprite, or Fanta", price: 6.50, category: "drinks", image: "/food/soft-drink.jpg" },
+      { name: "Soft Drink (Medium)", description: "Coca-Cola, Pepsi, Sprite, or Fanta", price: 5.50, category: "drinks", image: "/food/soft-drink.jpg" },
+      { name: "Bottled Water", description: "Pure spring water", price: 3.50, category: "drinks", image: "/food/water.jpg" },
+      { name: "Coffee", description: "Freshly brewed coffee", price: 4.50, category: "drinks", image: "/food/coffee.jpg" },
+      
+      // Combos
+      { name: "Movie Night Combo", description: "Large popcorn + Large drink", price: 13.50, category: "combos", image: "/food/combo1.jpg" },
+      { name: "Deluxe Combo", description: "Large popcorn + Large drink + Candy", price: 18.00, category: "combos", image: "/food/combo2.jpg" },
+      { name: "Date Night Special", description: "2x Medium drinks + Large popcorn + Nachos", price: 25.00, category: "combos", image: "/food/combo3.jpg" }
+    ];
+
+    await FoodItem.insertMany(foodItems);
+
+    console.log(`✅ Seed complete: ${insertedMovies.length} movies, 2 users, ${foodItems.length} food items, 0 bookings`);
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {

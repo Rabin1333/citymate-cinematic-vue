@@ -7,7 +7,7 @@ const Booking = require("../models/Booking");
 // POST /api/bookings - Create a new booking
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const { movieId, showtime, seats, cinema } = req.body;
+    const { movieId, showtime, seats, cinema, foodItems = [] } = req.body;
 
     // Validate required fields
     if (!movieId || !showtime || !seats || seats.length === 0) {
@@ -19,8 +19,34 @@ router.post("/", requireAuth, async (req, res) => {
     // Generate booking reference
     const bookingReference = `BK${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
-    // Calculate total amount (assuming $14 per seat)
-    const totalAmount = seats.length * 14;
+    // Calculate seat total (assuming $14 per seat)
+    const seatTotal = seats.length * 14;
+    
+    // Calculate food total and validate food items
+    let foodTotal = 0;
+    const validatedFoodItems = [];
+    
+    if (foodItems && foodItems.length > 0) {
+      const FoodItem = require("../models/FoodItem");
+      
+      for (const item of foodItems) {
+        const foodItem = await FoodItem.findById(item.itemId);
+        if (!foodItem || !foodItem.available) {
+          return res.status(400).json({ message: `Food item not available: ${item.itemId}` });
+        }
+        
+        const itemTotal = foodItem.price * item.quantity;
+        foodTotal += itemTotal;
+        
+        validatedFoodItems.push({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          price: itemTotal
+        });
+      }
+    }
+    
+    const totalAmount = seatTotal + foodTotal;
 
     // Create booking
     const booking = new Booking({
@@ -29,6 +55,7 @@ router.post("/", requireAuth, async (req, res) => {
       showtime,
       seats,
       cinema: cinema || "Downtown Cinema",
+      foodItems: validatedFoodItems,
       status: "confirmed",
       bookingReference,
       totalAmount
@@ -67,7 +94,8 @@ router.get("/:id", requireAuth, async (req, res) => {
     const booking = await Booking.findOne({
       _id: req.params.id,
       userId: req.user.id
-    }).populate("movieId", "title poster rating duration");
+    }).populate("movieId", "title poster rating duration")
+      .populate("foodItems.itemId", "name price category");
     
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
