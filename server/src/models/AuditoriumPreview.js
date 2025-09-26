@@ -23,6 +23,15 @@ const AuditoriumPreviewSchema = new mongoose.Schema({
       message: 'url360 must be a valid URL or local asset path'
     }
   },
+  videoUrl: {
+    type: String,
+    validate: {
+      validator: function(v) {
+        return !v || /^(https?:\/\/)|(\/assets\/)/.test(v); // Allow HTTP URLs or local assets, optional
+      },
+      message: 'videoUrl must be a valid URL or local asset path'
+    }
+  },
   description: {
     type: String,
     default: ""

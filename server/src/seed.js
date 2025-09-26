@@ -70,6 +70,7 @@ const bcrypt = require("bcryptjs");
       auditoriumId: String,
       zoneId: String,
       url360: String,
+      videoUrl: String,
       description: String,
       active: { type: Boolean, default: true }
     });
@@ -268,8 +269,8 @@ const bcrypt = require("bcryptjs");
     // Auditorium Previews (360° views for different seat zones)
     const auditoriumPreviews = [
       { auditoriumId: "downtown-screen-1", zoneId: "regular", url360: "/assets/360/regular-view.jpg", description: "View from regular seating area" },
-      { auditoriumId: "downtown-screen-1", zoneId: "premium", url360: "/assets/360/premium-view.jpg", description: "View from premium seating area with elevated perspective" },
-      { auditoriumId: "downtown-screen-1", zoneId: "vip", url360: "/assets/360/vip-view.jpg", description: "View from VIP seating with optimal screen viewing angle" }
+      { auditoriumId: "downtown-screen-1", zoneId: "premium", url360: "/assets/360/premium-view.jpg", videoUrl: "/assets/videos/premium-seating.mp4", description: "View from premium seating area with elevated perspective" },
+      { auditoriumId: "downtown-screen-1", zoneId: "vip", url360: "/assets/360/vip-view.jpg", videoUrl: "/assets/videos/vip-seating.mp4", description: "View from VIP seating with optimal screen viewing angle" }
     ];
 
     await AuditoriumPreview.insertMany(auditoriumPreviews);

@@ -15,12 +15,13 @@ router.get("/:id/previews", async (req, res) => {
     const previews = await AuditoriumPreview.find({
       auditoriumId,
       active: true
-    }).select('zoneId url360 description').sort({ zoneId: 1 });
+    }).select('zoneId url360 videoUrl description').sort({ zoneId: 1 });
 
     // Always return an array, even if empty
     res.json(previews.map(preview => ({
       zoneId: preview.zoneId,
       url360: preview.url360,
+      videoUrl: preview.videoUrl || null,
       description: preview.description || ""
     })));
   } catch (err) {
@@ -38,7 +39,7 @@ router.get("/:id/previews/:zoneId", async (req, res) => {
       auditoriumId,
       zoneId,
       active: true
-    }).select('zoneId url360 description');
+    }).select('zoneId url360 videoUrl description');
 
     if (!preview) {
       return res.status(404).json({ message: "Preview not found for this zone" });
@@ -47,6 +48,7 @@ router.get("/:id/previews/:zoneId", async (req, res) => {
     res.json({
       zoneId: preview.zoneId,
       url360: preview.url360,
+      videoUrl: preview.videoUrl || null,
       description: preview.description || ""
     });
   } catch (err) {

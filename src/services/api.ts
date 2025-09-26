@@ -1039,6 +1039,7 @@ export async function releaseParking(reservationId: string): Promise<{ message: 
 export interface AuditoriumPreview {
   zoneId: string;
   url360: string;
+  videoUrl?: string;
   description: string;
 }
 
