@@ -20,7 +20,9 @@ const FoodMenu = ({ selectedItems, onSelectionChange }: FoodMenuProps) => {
 
   const loadFoodItems = async () => {
     try {
+      console.log('Loading food items...');
       const items = await getFoodItems();
+      console.log('Loaded food items:', items);
       setFoodItems(items);
     } catch (error) {
       console.error("Failed to load food items:", error);

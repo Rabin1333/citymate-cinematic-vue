@@ -133,9 +133,9 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
 
     setLoading(true);
     try {
-      // Ensure we have all required fields
+      // Ensure we have all required fields - convert movieId to number if needed
       const reminderData = {
-        movieId: movie.id,
+        movieId: typeof movie.id === 'string' ? parseInt(movie.id) : movie.id,
         movieTitle: movie.title,
         releaseDate: movie.releaseDate,
         channels,
@@ -143,6 +143,8 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
         ...(channels.includes('sms') && { phone }),
         timezone: 'Australia/Sydney'
       };
+
+      console.log('Sending reminder data:', reminderData);
 
       await createReminder(reminderData);
 

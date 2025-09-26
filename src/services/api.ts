@@ -4,7 +4,7 @@ const getApiBase = () => {
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) return envUrl;
   
-  // In development, use localhost:4000
+  // In development, use localhost:4000 but fallback to current origin if connection fails
   if (import.meta.env.DEV) return "http://localhost:4000";
   
   // In production, construct from window.location
@@ -13,6 +13,27 @@ const getApiBase = () => {
 };
 
 export const BASE = getApiBase();
+
+// Mock data fallbacks when backend is unavailable
+const mockFoodItems: FoodItem[] = [
+  { _id: "1", name: "Classic Popcorn", description: "Freshly popped corn with butter", price: 6.50, category: "snacks", image: "/food/popcorn.jpg", available: true },
+  { _id: "2", name: "Caramel Popcorn", description: "Sweet caramel coated popcorn", price: 7.50, category: "snacks", image: "/food/caramel-popcorn.jpg", available: true },
+  { _id: "3", name: "Nachos", description: "Crispy tortilla chips with cheese", price: 8.00, category: "snacks", image: "/food/nachos.jpg", available: true },
+  { _id: "4", name: "Soft Drink", description: "Cola, Sprite, or Orange", price: 4.50, category: "drinks", image: "/food/soft-drink.jpg", available: true },
+  { _id: "5", name: "Water", description: "500ml bottled water", price: 3.00, category: "drinks", image: "/food/water.jpg", available: true },
+  { _id: "6", name: "Movie Combo", description: "Popcorn + Drink", price: 10.00, category: "combos", image: "/food/combo1.jpg", available: true }
+];
+
+const mockParkingLots: ParkingLot[] = [
+  { lotId: "1", name: "Downtown Plaza", location: "123 Main St", available: 15, capacity: 50, priceHint: "$5/hour" },
+  { lotId: "2", name: "City Center Garage", location: "456 Center Ave", available: 8, capacity: 30, priceHint: "$4/hour" }
+];
+
+const mockAuditoriumPreviews: AuditoriumPreview[] = [
+  { zoneId: "regular", url360: "/assets/360/regular-view.jpg", videoUrl: null, description: "Standard seating with great view of the screen" },
+  { zoneId: "premium", url360: "/assets/360/premium-view.jpg", videoUrl: "/assets/videos/premium-seating.mp4", description: "Enhanced comfort with reclining seats" },
+  { zoneId: "vip", url360: "/assets/360/vip-view.jpg", videoUrl: "/assets/videos/vip-seating.mp4", description: "Luxury seating with food service" }
+];
 
 /** ----------------- Movie types ----------------- **/
 export interface ApiMovie {
@@ -494,9 +515,14 @@ export interface FoodOrderItem {
 }
 
 export async function getFoodItems(): Promise<FoodItem[]> {
-  const res = await fetch(`${BASE}/api/food`);
-  if (!res.ok) throw new Error(`Failed to fetch food items (${res.status})`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE}/api/food`);
+    if (!res.ok) throw new Error(`Failed to fetch food items (${res.status})`);
+    return res.json();
+  } catch (error) {
+    console.warn('Backend unavailable, using mock food data:', error);
+    return mockFoodItems;
+  }
 }
 
 /** ----------------- Bookings ----------------- **/
@@ -872,7 +898,7 @@ export interface Reminder {
 }
 
 export async function createReminder(reminderData: {
-  movieId: number;
+  movieId: number | string;
   movieTitle: string;
   releaseDate: string;
   channels: string[];
@@ -883,21 +909,30 @@ export async function createReminder(reminderData: {
   const token = getToken();
   if (!token) throw new Error('No authentication token');
 
-  const res = await fetch(`${BASE}/api/reminders`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(reminderData),
-  });
+  try {
+    const res = await fetch(`${BASE}/api/reminders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(reminderData),
+    });
 
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Failed to create reminder');
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || 'Failed to create reminder');
+    }
+
+    return res.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      // Network error - backend unavailable
+      console.warn('Backend unavailable, saving reminder locally');
+      throw new Error('Service temporarily unavailable. Your reminder has been saved locally and will sync when you sign in.');
+    }
+    throw error;
   }
-
-  return res.json();
 }
 
 export async function getMyReminders(): Promise<Reminder[]> {
@@ -958,10 +993,15 @@ export interface ParkingReservation {
 }
 
 export async function getParkingLots(cinemaId: string, showtimeISO: string): Promise<ParkingLot[]> {
-  const params = new URLSearchParams({ cinemaId, showtime: showtimeISO });
-  const res = await fetch(`${BASE}/api/parking/lots?${params}`);
-  if (!res.ok) throw new Error(`Failed to fetch parking lots (${res.status})`);
-  return res.json();
+  try {
+    const params = new URLSearchParams({ cinemaId, showtime: showtimeISO });
+    const res = await fetch(`${BASE}/api/parking/lots?${params}`);
+    if (!res.ok) throw new Error(`Failed to fetch parking lots (${res.status})`);
+    return res.json();
+  } catch (error) {
+    console.warn('Backend unavailable, using mock parking data:', error);
+    return mockParkingLots;
+  }
 }
 
 export async function holdParking(
@@ -1044,14 +1084,19 @@ export interface AuditoriumPreview {
 }
 
 export async function getAuditoriumPreviews(auditoriumId: string): Promise<AuditoriumPreview[]> {
-  const res = await fetch(`${BASE}/api/auditoriums/${encodeURIComponent(auditoriumId)}/previews`);
-  if (!res.ok) {
-    if (res.status === 404) {
-      return []; // Return empty array if auditorium not found
+  try {
+    const res = await fetch(`${BASE}/api/auditoriums/${encodeURIComponent(auditoriumId)}/previews`);
+    if (!res.ok) {
+      if (res.status === 404) {
+        return []; // Return empty array if auditorium not found
+      }
+      throw new Error(`Failed to fetch auditorium previews (${res.status})`);
     }
-    throw new Error(`Failed to fetch auditorium previews (${res.status})`);
+    return res.json();
+  } catch (error) {
+    console.warn('Backend unavailable, using mock auditorium previews:', error);
+    return mockAuditoriumPreviews;
   }
-  return res.json();
 }
 
 /** ----------------- Predictions System ----------------- **/

@@ -49,6 +49,7 @@ const SeatPreviewModal = ({ isOpen, onClose, auditoriumId, zoneId, zoneName }: S
       setVideoError(false);
       try {
         const previews = await getAuditoriumPreviews(auditoriumId);
+        console.log('Loaded previews for auditorium:', auditoriumId, previews);
         
         if (!previews || previews.length === 0) {
           setError(`No previews available for this auditorium`);
