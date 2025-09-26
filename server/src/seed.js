@@ -82,7 +82,14 @@ const bcrypt = require("bcryptjs");
     const AuditoriumPreview = mongoose.model("AuditoriumPreview", AuditoriumPreviewSchema);
 
     // ——— Clean old data (safe for dev) ———
-    await Promise.all([Movie.deleteMany({}), User.deleteMany({}), Booking.deleteMany({})]);
+    await Promise.all([
+      Movie.deleteMany({}), 
+      User.deleteMany({}), 
+      Booking.deleteMany({}),
+      FoodItem.deleteMany({}),
+      ParkingLot.deleteMany({}),
+      AuditoriumPreview.deleteMany({})
+    ]);
 
     // Helper
     const times = ["11:00 AM", "2:30 PM", "6:15 PM", "9:00 PM"];

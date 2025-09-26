@@ -1,5 +1,18 @@
 // src/services/api.ts - COMPLETE VERSION WITH ALL FEATURES
-export const BASE = (import.meta.env.VITE_API_URL as string) || "http://localhost:4000";
+const getApiBase = () => {
+  // Try environment variable first, then fallback to window location for production
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) return envUrl;
+  
+  // In development, use localhost:4000
+  if (import.meta.env.DEV) return "http://localhost:4000";
+  
+  // In production, construct from window.location
+  const { protocol, hostname, port } = window.location;
+  return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+};
+
+export const BASE = getApiBase();
 
 /** ----------------- Movie types ----------------- **/
 export interface ApiMovie {

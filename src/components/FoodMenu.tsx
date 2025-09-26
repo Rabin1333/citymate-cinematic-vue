@@ -23,11 +23,14 @@ const FoodMenu = ({ selectedItems, onSelectionChange }: FoodMenuProps) => {
       const items = await getFoodItems();
       setFoodItems(items);
     } catch (error) {
+      console.error("Failed to load food items:", error);
       toast({
-        title: "Error",
-        description: "Failed to load food menu",
+        title: "Food Menu Error",
+        description: error instanceof Error ? error.message : "Failed to load food menu. Please try again.",
         variant: "destructive",
       });
+      // Set empty array so "No snacks available" shows instead of loading forever
+      setFoodItems([]);
     } finally {
       setLoading(false);
     }

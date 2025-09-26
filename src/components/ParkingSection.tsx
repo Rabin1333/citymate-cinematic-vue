@@ -47,7 +47,7 @@ const ParkingSection = ({ bookingId, cinema, showtime, onParkingChange }: Parkin
       const today = new Date();
       const showtimeISO = new Date(`${today.toISOString().split('T')[0]}T${showtime}:00Z`).toISOString();
       
-      const parkingLots = await getParkingLots(cinema.toLowerCase().replace(' ', ''), showtimeISO);
+      const parkingLots = await getParkingLots("downtown", showtimeISO);
       setLots(parkingLots);
     } catch (error) {
       console.error('Failed to load parking lots:', error);

@@ -46,6 +46,12 @@ const SeatPreviewModal = ({ isOpen, onClose, auditoriumId, zoneId, zoneName }: S
       setError(null);
       try {
         const previews = await getAuditoriumPreviews(auditoriumId);
+        
+        if (!previews || previews.length === 0) {
+          setError(`No previews available for this auditorium`);
+          return;
+        }
+        
         const zonePreview = previews.find(p => p.zoneId === zoneId);
         
         if (zonePreview) {
@@ -55,12 +61,7 @@ const SeatPreviewModal = ({ isOpen, onClose, auditoriumId, zoneId, zoneName }: S
         }
       } catch (err) {
         console.error('Failed to load preview:', err);
-        setError('Failed to load seat preview');
-        toast({
-          title: "Preview Error",
-          description: "Could not load seat preview",
-          variant: "destructive",
-        });
+        setError(err instanceof Error ? err.message : 'Failed to load seat preview');
       } finally {
         setLoading(false);
       }

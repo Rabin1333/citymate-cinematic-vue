@@ -133,27 +133,31 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
 
     setLoading(true);
     try {
-      await createReminder({
+      // Ensure we have all required fields
+      const reminderData = {
         movieId: movie.id,
         movieTitle: movie.title,
         releaseDate: movie.releaseDate,
         channels,
-        email: channels.includes('email') ? email : undefined,
-        phone: channels.includes('sms') ? phone : undefined,
+        ...(channels.includes('email') && { email }),
+        ...(channels.includes('sms') && { phone }),
         timezone: 'Australia/Sydney'
-      });
+      };
+
+      await createReminder(reminderData);
 
       toast({
         title: "Reminder set!",
-        description: "Countdown pinned in your toolbar."
+        description: "You'll be notified when this movie is released."
       });
 
       onReminderSet?.();
       onClose();
     } catch (error: any) {
+      console.error("Failed to create reminder:", error);
       toast({
         title: "Failed to set reminder",
-        description: error.message || "Please try again.",
+        description: error.message || "Please check your connection and try again.",
         variant: "destructive"
       });
     } finally {

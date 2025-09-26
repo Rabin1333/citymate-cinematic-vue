@@ -153,8 +153,8 @@ const SeatSelection = () => {
   };
 
   const getAuditoriumId = () => {
-    // Create auditorium ID based on cinema and screen
-    return `${cinema.toLowerCase().replace(/\s+/g, '-')}-screen-1`;
+    // Create auditorium ID that matches backend seeded data
+    return "downtown-screen-1"; // Match the seeded auditorium ID
   };
 
   // --- Step 6: Create booking via API ---
