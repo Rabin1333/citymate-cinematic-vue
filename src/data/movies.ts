@@ -134,6 +134,23 @@ export const movies: Movie[] = [
   },
   {
     id: 8,
+    title: "City Mate: The Premiere",
+    genre: ["Drama", "Romance"],
+    rating: "PG-13", 
+    duration: "130 min",
+    releaseYear: "2025",
+    poster: "/posters/city-mate.jpg",
+    synopsis: "A detective hunts truth across parallel timelines.",
+    director: "J. Smith",
+    cast: ["TBD"],
+    showtimes: [],
+    pricing: { regular: 16, premium: 20, vip: 24 },
+    status: "coming-soon",
+    releaseDate: "2025-11-10",
+    trailerUrl: "/trailers/placeholder-trailer.mp4"
+  },
+  {
+    id: 9,
     title: "Prachanda: The Mastermind",
     genre: ["Sci-Fi", "Thriller", "Action"],
     rating: "M",
