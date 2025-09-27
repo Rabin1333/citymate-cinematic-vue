@@ -18,6 +18,7 @@ export interface Movie {
   status: 'now-showing' | 'coming-soon';
   featured?: boolean;
   releaseDate?: string;
+  trailerUrl?: string;
 }
 
 export const movies: Movie[] = [
@@ -111,7 +112,8 @@ export const movies: Movie[] = [
     showtimes: ["12:30 PM", "3:45 PM", "7:00 PM", "10:15 PM"],
     pricing: { regular: 12, premium: 18, vip: 25 },
     status: "coming-soon",
-    releaseDate: "2024-12-25"
+    releaseDate: "2024-12-25",
+    trailerUrl: "/trailers/spiderman-trailer.mp4"
   },
   {
     id: 7,
@@ -127,7 +129,25 @@ export const movies: Movie[] = [
     showtimes: ["2:00 PM", "5:30 PM", "8:45 PM"],
     pricing: { regular: 15, premium: 22, vip: 30 },
     status: "coming-soon",
-    releaseDate: "2025-01-15"
+    releaseDate: "2025-01-15",
+    trailerUrl: "/trailers/avengers-trailer.mp4"
+  },
+  {
+    id: 8,
+    title: "Prachanda: The Mastermind",
+    genre: ["Sci-Fi", "Thriller", "Action"],
+    rating: "M",
+    duration: "130 min",
+    releaseYear: "2026",
+    poster: "/posters/prachanda-poster.png",
+    synopsis: "A detective hunts truth across parallel timelines in this mind-bending thriller that questions the nature of reality itself.",
+    director: "J. Doe",
+    cast: ["TBD"],
+    showtimes: [],
+    pricing: { regular: 16, premium: 20, vip: 24 },
+    status: "coming-soon",
+    releaseDate: "2025-02-14",
+    trailerUrl: "/trailers/prachanda-trailer.mov"
   }
 ];
 

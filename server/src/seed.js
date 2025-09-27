@@ -205,21 +205,23 @@ const bcrypt = require("bcryptjs");
         pricing: { regular: 16, premium: 20, vip: 24 },
         status: "coming-soon",
         releaseDate: plusDays(14), // 2 weeks ahead
+        trailerUrl: "/trailers/city-mate-trailer.mp4",
       },
       {
         title: "Prachanda: The Mastermind",
-        genre: ["Sci-Fi", "Thriller"],
+        genre: ["Sci-Fi", "Thriller", "Action"],
         rating: "M",
         duration: "130 min",
         releaseYear: "2026",
-        poster: "/posters/prachanda.jpg",
-        synopsis: "A detective hunts truth across parallel timelines.",
+        poster: "/posters/prachanda-poster.png",
+        synopsis: "A detective hunts truth across parallel timelines in this mind-bending thriller that questions the nature of reality itself.",
         director: "J. Doe",
         cast: ["TBD"],
         showtimes: [],
         pricing: { regular: 16, premium: 20, vip: 24 },
         status: "coming-soon",
         releaseDate: plusDays(30), // 1 month ahead
+        trailerUrl: "/trailers/prachanda-trailer.mov",
       },
     ];
 

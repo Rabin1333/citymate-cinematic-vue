@@ -21,6 +21,7 @@ const MovieSchema = new mongoose.Schema({
   featured: Boolean,
   // stored as ISO string in seed to match your UI; we'll parse it when filtering
   releaseDate: String,
+  trailerUrl: String,
   avgRating: { type: Number, default: 0 },
   reviewCount: { type: Number, default: 0 }
 }, { timestamps: true });
