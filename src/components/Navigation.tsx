@@ -21,13 +21,17 @@ const Navigation = () => {
     window.location.href = '/';
   };
 
-  // Public links only — Admin comes from the separate conditional block below
-  const navigation = [
-    { name: 'Home', href: '/' },
-    { name: 'Movies', href: '/movies' },
-    { name: 'Showtimes', href: '/showtimes' },
-    ...(isLoggedIn ? [] : [{ name: 'Login', href: '/auth' }]),
-  ];
+  // Role-based navigation
+  const navigation = isAdmin ? 
+    // Admin only sees basic auth links
+    [] : 
+    // Normal users see full navigation
+    [
+      { name: 'Home', href: '/' },
+      { name: 'Movies', href: '/movies' },
+      { name: 'Showtimes', href: '/showtimes' },
+      ...(isLoggedIn ? [] : [{ name: 'Login', href: '/auth' }]),
+    ];
 
   const isActive = (path: string) => location.pathname === path;
 
