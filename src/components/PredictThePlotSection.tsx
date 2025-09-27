@@ -135,17 +135,22 @@ const PredictThePlotSection = ({ movieId, movieTitle, isReleased, releaseDate }:
 
   return (
     <>
-      <Card className="border-border">
+      <Card className="prediction-card border-cinema-red/20 bg-gradient-to-br from-space-gray/50 to-space-black/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-cinema-red" />
-            Predict-the-Plot
+          <CardTitle className="flex items-center gap-3 text-2xl">
+            <div className="relative">
+              <Lightbulb className="w-6 h-6 text-cinema-red animate-pulse" />
+              <div className="absolute inset-0 bg-cinema-red/20 blur-lg rounded-full animate-pulse" />
+            </div>
+            <span className="bg-gradient-to-r from-cinema-red via-orange-400 to-purple-500 bg-clip-text text-transparent">
+              Predict-the-Plot
+            </span>
             {prediction?.isWinner && (
-              <Trophy className="w-4 h-4 text-yellow-500" aria-label="Winner!" />
+              <Trophy className="w-5 h-5 text-yellow-500 animate-bounce" aria-label="Winner!" />
             )}
           </CardTitle>
-          <p className="text-sm text-foreground-secondary">
-            Guess what happens in {movieTitle} and earn rewards if you're right!
+          <p className="text-foreground-secondary text-lg">
+            🎬 Guess what happens in {movieTitle} and earn rewards if you're right!
           </p>
         </CardHeader>
         
@@ -232,9 +237,8 @@ const PredictThePlotSection = ({ movieId, movieTitle, isReleased, releaseDate }:
                 <Button 
                   onClick={handleSubmitPrediction}
                   disabled={loading || !predictionText.trim()}
-                  className="flex items-center gap-1"
+                  className="btn-movie-reel pl-10 relative"
                 >
-                  <Lightbulb className="w-3 h-3" />
                   {loading ? "Saving..." : "Submit Prediction"}
                 </Button>
               </div>

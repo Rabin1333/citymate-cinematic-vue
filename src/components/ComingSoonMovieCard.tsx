@@ -75,7 +75,8 @@ const ComingSoonMovieCard = ({ movie, className = "", onReminderSet }: ComingSoo
 
   return (
     <>
-      <div className={`movie-card group ${className} relative overflow-hidden`}>
+      <Link to={`/showtimes?movieId=${idStr}`} className="block">
+        <div className={`movie-card group ${className} relative overflow-hidden cursor-pointer`}>
         {/* Cyber Glow Border */}
         <div className="absolute inset-0 bg-gradient-cyber opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
         
@@ -192,6 +193,7 @@ const ComingSoonMovieCard = ({ movie, className = "", onReminderSet }: ComingSoo
           </div>
         </div>
       </div>
+      </Link>
 
       {/* Reminder Modal */}
       {isComingSoon && isFutureRelease && (

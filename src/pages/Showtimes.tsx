@@ -1,16 +1,23 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Clock, Users, TrendingUp, Zap, MapPin } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Search, Clock, Users, TrendingUp, Zap, MapPin, Film, Sparkles } from 'lucide-react';
 import { getMovies, type UiMovie } from '@/services/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ShowtimeCard from '@/components/showtimes/ShowtimeCard';
 import QuickActions from '@/components/showtimes/QuickActions';
 import ShowtimeFilters from '@/components/showtimes/ShowtimeFilters';
+import PredictThePlotSection from '@/components/PredictThePlotSection';
 
 const Showtimes = () => {
+  const [searchParams] = useSearchParams();
+  const movieIdFromUrl = searchParams.get('movieId');
+  
   const [movies, setMovies] = useState<UiMovie[]>([]);
+  const [allMovies, setAllMovies] = useState<UiMovie[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -20,15 +27,28 @@ const Showtimes = () => {
   const [viewMode, setViewMode] = useState<'theater' | 'time'>('theater');
   const [quickFilter, setQuickFilter] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('all');
+  
+  // Single movie mode for coming soon movies
+  const singleMovie = movieIdFromUrl ? allMovies.find(m => m.id === movieIdFromUrl) : null;
+  const isComingSoonMovie = singleMovie?.status === 'coming-soon';
 
   // Load movies
   useEffect(() => {
     const loadMovies = async () => {
       try {
         setLoading(true);
-        const allMovies = await getMovies(false);
-        const nowShowingMovies = allMovies.filter(m => m.status === 'now-showing');
-        setMovies(nowShowingMovies);
+        const fetchedMovies = await getMovies(false);
+        setAllMovies(fetchedMovies);
+        
+        if (movieIdFromUrl) {
+          // Single movie mode - find the specific movie
+          const targetMovie = fetchedMovies.find(m => m.id === movieIdFromUrl);
+          setMovies(targetMovie ? [targetMovie] : []);
+        } else {
+          // Normal mode - show only now-showing movies
+          const nowShowingMovies = fetchedMovies.filter(m => m.status === 'now-showing');
+          setMovies(nowShowingMovies);
+        }
       } catch (error) {
         console.error('Failed to load movies:', error);
       } finally {
@@ -36,7 +56,7 @@ const Showtimes = () => {
       }
     };
     loadMovies();
-  }, []);
+  }, [movieIdFromUrl]);
 
   const sydneyLocations = [
     { id: 'all', name: 'All Sydney Areas' },
@@ -123,70 +143,122 @@ const Showtimes = () => {
         
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Movie Showtimes</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            {isComingSoonMovie ? singleMovie?.title : 'Movie Showtimes'}
+          </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-4">
-            Find the perfect showtime for your movie experience • {selectedDate}
+            {isComingSoonMovie 
+              ? `Get ready for ${singleMovie?.title} • Coming Soon`
+              : `Find the perfect showtime for your movie experience • ${selectedDate}`
+            }
           </p>
-          <div className="flex items-center justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-muted-foreground">Updated 2 minutes ago</span>
+          {!isComingSoonMovie && (
+            <div className="flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <span className="text-muted-foreground">Updated 2 minutes ago</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-cinema-red" />
+                <span className="text-foreground">Current occupancy: 67%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-400" />
+                <span className="text-foreground">1,247 tickets booked today</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-cinema-red" />
-              <span className="text-foreground">Current occupancy: 67%</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-green-400" />
-              <span className="text-foreground">1,247 tickets booked today</span>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Search + Location + Toggle */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search movies, directors, or cast..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-            <SelectTrigger className="w-64">
-              <SelectValue>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  {sydneyLocations.find(loc => loc.id === selectedLocation)?.name}
-                </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {sydneyLocations.map(location => (
-                <SelectItem key={location.id} value={location.id}>
+        {/* Coming Soon Movie Special Content */}
+        {isComingSoonMovie && singleMovie && (
+          <div className="mb-8">
+            {/* No Showtimes Message */}
+            <Card className="mb-8 relative overflow-hidden border-cinema-red/20 bg-gradient-to-r from-cinema-red/5 to-transparent">
+              <div className="absolute inset-0 bg-gradient-to-r from-cinema-red/10 via-transparent to-cinema-red/10 animate-pulse" />
+              <CardHeader className="relative">
+                <CardTitle className="flex items-center gap-3 text-2xl">
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {location.name}
+                    <Film className="h-6 w-6 text-cinema-red animate-pulse" />
+                    <span className="bg-gradient-to-r from-cinema-red to-orange-400 bg-clip-text text-transparent">
+                      No Showtimes Available Yet
+                    </span>
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={viewMode} onValueChange={(v) => setViewMode(v as 'theater' | 'time')}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="theater">Theater View</SelectItem>
-              <SelectItem value="time">Time Block View</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-foreground-secondary text-lg mb-4">
+                  {singleMovie.title} is coming soon! Showtimes will be available closer to the release date.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-cinema-red font-medium">
+                  <Sparkles className="h-4 w-4 animate-pulse" />
+                  <span>Expected Release: {singleMovie.releaseDate ? new Date(singleMovie.releaseDate).toLocaleDateString() : 'TBA'}</span>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Predict the Plot Section */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-cinema-red/10 to-orange-400/10 rounded-lg animate-pulse opacity-50" />
+              <div className="relative">
+                <PredictThePlotSection
+                  movieId={singleMovie.id}
+                  movieTitle={singleMovie.title}
+                  isReleased={false}
+                  releaseDate={singleMovie.releaseDate}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Normal Showtimes Content */}
+        {!isComingSoonMovie && (
+          <>
+            {/* Search + Location + Toggle */}
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search movies, directors, or cast..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <SelectTrigger className="w-64">
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {sydneyLocations.find(loc => loc.id === selectedLocation)?.name}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {sydneyLocations.map(location => (
+                    <SelectItem key={location.id} value={location.id}>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        {location.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={viewMode} onValueChange={(v) => setViewMode(v as 'theater' | 'time')}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="theater">Theater View</SelectItem>
+                  <SelectItem value="time">Time Block View</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Layout Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Main column (filters + theaters) */}
           <div className="lg:col-span-3">
@@ -261,16 +333,18 @@ const Showtimes = () => {
                 </Button>
               </div>
             )}
-          </div>
+            </div>
 
-          {/* Sidebar - QuickActions */}
-          <div className="lg:col-span-1">
-            <QuickActions
-              onQuickFilter={setQuickFilter}
-              activeFilter={quickFilter}
-            />
+            {/* Sidebar - QuickActions */}
+            <div className="lg:col-span-1">
+              <QuickActions
+                onQuickFilter={setQuickFilter}
+                activeFilter={quickFilter}
+              />
+            </div>
           </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

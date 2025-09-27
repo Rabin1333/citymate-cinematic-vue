@@ -678,6 +678,89 @@ All colors MUST be HSL. Neon-inspired cinematic experience.
               inset 0 1px 0 rgba(139, 92, 246, 0.1);
 }
 
+/* Movie Reel Animation for Submit Button */
+@keyframes movie-reel {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.btn-movie-reel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, hsl(var(--cinema-red)), hsl(var(--cinema-red-dark)));
+  border: 1px solid hsl(var(--cinema-red));
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 20px hsl(var(--cinema-red) / 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-movie-reel:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px hsl(var(--cinema-red) / 0.5);
+  background: linear-gradient(135deg, hsl(var(--cinema-red-light)), hsl(var(--cinema-red)));
+}
+
+.btn-movie-reel::before {
+  content: '🎬';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: movie-reel 2s linear infinite;
+}
+
+.btn-movie-reel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.btn-movie-reel:hover::after {
+  transform: translateX(100%);
+}
+
+/* Prediction Card Glow */
+.prediction-card {
+  position: relative;
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid hsl(var(--cinema-red) / 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.prediction-card:hover {
+  border-color: hsl(var(--cinema-red) / 0.6);
+  box-shadow: 0 0 30px hsl(var(--cinema-red) / 0.2);
+}
+
+.prediction-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, hsl(var(--cinema-red)), transparent, hsl(var(--cinema-red)));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.prediction-card:hover::before {
+  opacity: 1;
+  animation: flicker 2s infinite;
+}
+
 /* Reduced Motion Fallback */
 @media (prefers-reduced-motion: reduce) {
   .nav-link::after,
