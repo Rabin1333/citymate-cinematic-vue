@@ -33,7 +33,7 @@ const MovieCard = ({ movie, className = "" }: MovieCardProps) => {
         <img
           src={posterSrc}
           alt={movie.title}
-          className="w-full h-80 object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110 group-hover:contrast-110"
+          className="w-full h-64 object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110 group-hover:contrast-110"
         />
         
         {/* Neon Overlay Effect */}

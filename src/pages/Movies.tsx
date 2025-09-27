@@ -1,16 +1,17 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import MovieCard from "../components/MovieCard";
 import ComingSoonMovieCard from "../components/ComingSoonMovieCard";
-import { getMovies, type UiMovie } from "../services/api"; // <-- live API
+import { getMovies, type UiMovie } from "../services/api";
+import { useSearch } from "../contexts/SearchContext";
 
 const Movies = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState<string>("All");
   const [movies, setMovies] = useState<UiMovie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  const { searchTerm, selectedGenre, setSearchTerm, setSelectedGenre } = useSearch();
 
   // fetch from backend
   useEffect(() => {
@@ -26,11 +27,6 @@ const Movies = () => {
     })();
   }, []);
 
-  // genres from live data
-  const genres = useMemo(() => {
-    const all = movies.flatMap((m) => m.genre || []);
-    return ["All", ...Array.from(new Set(all))];
-  }, [movies]);
 
   // filter by search + genre
   const filteredMovies = useMemo(() => {
@@ -60,42 +56,45 @@ const Movies = () => {
           </p>
         </div>
 
-        {/* Search & Filters */}
-        <div className="mb-8 space-y-6">
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search movies, directors, or actors..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-cinema pl-12 w-full text-lg py-4"
-            />
-          </div>
-
-          <div className="flex items-center justify-center">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="h-5 w-5 text-foreground-secondary" />
-              <span className="text-foreground-secondary font-medium">Filter by Genre:</span>
+        {/* Quick Actions */}
+        {(searchTerm || selectedGenre !== "All") && (
+          <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {searchTerm && (
+                <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-lg border">
+                  <Search className="h-4 w-4 text-foreground-secondary" />
+                  <span className="text-sm text-foreground-secondary">Search: "{searchTerm}"</span>
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="text-cinema-red hover:text-cinema-red/80 ml-2"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              {selectedGenre !== "All" && (
+                <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-lg border">
+                  <span className="text-sm text-foreground-secondary">Genre: {selectedGenre}</span>
+                  <button
+                    onClick={() => setSelectedGenre("All")}
+                    className="text-cinema-red hover:text-cinema-red/80 ml-2"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedGenre("All");
+              }}
+              className="text-sm text-foreground-secondary hover:text-cinema-red transition-colors"
+            >
+              Clear all filters
+            </button>
           </div>
-
-          <div className="flex flex-wrap justify-center gap-2">
-            {genres.map((genre) => (
-              <button
-                key={genre}
-                onClick={() => setSelectedGenre(genre)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  selectedGenre === genre
-                    ? "bg-cinema-red text-white shadow-button"
-                    : "bg-card text-foreground-secondary hover:bg-cinema-red/20 hover:text-cinema-red border border-border"
-                }`}
-              >
-                {genre}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Results */}
         <div className="mb-6">
