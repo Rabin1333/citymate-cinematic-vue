@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, MessageSquare, Percent, Gift, Users, Send, Calendar, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 interface Promotion {
   id: string;
@@ -36,6 +37,9 @@ interface Campaign {
 
 const MarketingDashboard = () => {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(false);
   const [newPromotion, setNewPromotion] = useState({
     name: '',
     type: 'percentage' as 'percentage' | 'fixed' | 'bogo',
@@ -45,81 +49,102 @@ const MarketingDashboard = () => {
     endDate: '',
     maxUsage: 100
   });
+  const [newCampaign, setNewCampaign] = useState({
+    name: '',
+    type: 'email' as 'email' | 'sms',
+    subject: '',
+    audience: 'all',
+    content: ''
+  });
 
-  const promotions: Promotion[] = [
-    {
-      id: '1',
-      name: 'Student Discount',
-      type: 'percentage',
-      value: 15,
-      code: 'STUDENT15',
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
-      usageCount: 234,
-      maxUsage: 1000,
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'Weekend Special',
-      type: 'fixed',
-      value: 5,
-      code: 'WEEKEND5',
-      startDate: '2024-01-01',
-      endDate: '2024-03-31',
-      usageCount: 156,
-      maxUsage: 500,
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Buy One Get One',
-      type: 'bogo',
-      value: 50,
-      code: 'BOGO50',
-      startDate: '2024-02-01',
-      endDate: '2024-02-14',
-      usageCount: 89,
-      maxUsage: 200,
-      status: 'expired'
-    }
-  ];
+  // Load initial data
+  useEffect(() => {
+    loadPromotions();
+    loadCampaigns();
+  }, []);
 
-  const campaigns: Campaign[] = [
-    {
-      id: '1',
-      name: 'New Movie Releases',
-      type: 'email',
-      subject: 'Exciting New Movies This Week!',
-      audience: 'All Active Users',
-      sentCount: 2847,
-      openRate: 24.5,
-      clickRate: 8.2,
-      status: 'sent'
-    },
-    {
-      id: '2',
-      name: 'Weekend Promotions',
-      type: 'sms',
-      subject: 'Weekend movie deals await you!',
-      audience: 'Frequent Visitors',
-      sentCount: 1234,
-      openRate: 89.2,
-      clickRate: 15.6,
-      status: 'sent'
-    },
-    {
-      id: '3',
-      name: 'Birthday Offers',
-      type: 'email',
-      subject: 'Happy Birthday! Enjoy Special Discounts',
-      audience: 'Birthday Users',
-      sentCount: 0,
-      openRate: 0,
-      clickRate: 0,
-      status: 'draft'
-    }
-  ];
+  const loadPromotions = async () => {
+    // Mock data for now - in production this would fetch from API
+    const mockPromotions: Promotion[] = [
+      {
+        id: '1',
+        name: 'Student Discount',
+        type: 'percentage',
+        value: 15,
+        code: 'STUDENT15',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        usageCount: 234,
+        maxUsage: 1000,
+        status: 'active'
+      },
+      {
+        id: '2',
+        name: 'Weekend Special',
+        type: 'fixed',
+        value: 5,
+        code: 'WEEKEND5',
+        startDate: '2024-01-01',
+        endDate: '2024-03-31',
+        usageCount: 156,
+        maxUsage: 500,
+        status: 'active'
+      },
+      {
+        id: '3',
+        name: 'Buy One Get One',
+        type: 'bogo',
+        value: 50,
+        code: 'BOGO50',
+        startDate: '2024-02-01',
+        endDate: '2024-02-14',
+        usageCount: 89,
+        maxUsage: 200,
+        status: 'expired'
+      }
+    ];
+    setPromotions(mockPromotions);
+  };
+
+  const loadCampaigns = async () => {
+    // Mock data for now - in production this would fetch from API
+    const mockCampaigns: Campaign[] = [
+      {
+        id: '1',
+        name: 'New Movie Releases',
+        type: 'email',
+        subject: 'Exciting New Movies This Week!',
+        audience: 'All Active Users',
+        sentCount: 2847,
+        openRate: 24.5,
+        clickRate: 8.2,
+        status: 'sent'
+      },
+      {
+        id: '2',
+        name: 'Weekend Promotions',
+        type: 'sms',
+        subject: 'Weekend movie deals await you!',
+        audience: 'Frequent Visitors',
+        sentCount: 1234,
+        openRate: 89.2,
+        clickRate: 15.6,
+        status: 'sent'
+      },
+      {
+        id: '3',
+        name: 'Birthday Offers',
+        type: 'email',
+        subject: 'Happy Birthday! Enjoy Special Discounts',
+        audience: 'Birthday Users',
+        sentCount: 0,
+        openRate: 0,
+        clickRate: 0,
+        status: 'draft'
+      }
+    ];
+    setCampaigns(mockCampaigns);
+  };
 
   const loyaltyProgram = {
     totalMembers: 1456,
@@ -137,6 +162,102 @@ const MarketingDashboard = () => {
     setNewPromotion({ ...newPromotion, code });
   };
 
+  const createPromotion = async () => {
+    if (!newPromotion.name || !newPromotion.code || !newPromotion.startDate || !newPromotion.endDate) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // In production, this would be an API call
+      const promotion: Promotion = {
+        id: Date.now().toString(),
+        ...newPromotion,
+        usageCount: 0,
+        status: new Date(newPromotion.startDate) > new Date() ? 'scheduled' : 'active'
+      };
+      
+      setPromotions([...promotions, promotion]);
+      setNewPromotion({
+        name: '',
+        type: 'percentage',
+        value: 0,
+        code: '',
+        startDate: '',
+        endDate: '',
+        maxUsage: 100
+      });
+      toast.success('Promotion created successfully!');
+    } catch (error) {
+      toast.error('Failed to create promotion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createCampaign = async () => {
+    if (!newCampaign.name || !newCampaign.subject || !newCampaign.content) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // In production, this would be an API call
+      const campaign: Campaign = {
+        id: Date.now().toString(),
+        ...newCampaign,
+        sentCount: 0,
+        openRate: 0,
+        clickRate: 0,
+        status: 'draft'
+      };
+      
+      setCampaigns([...campaigns, campaign]);
+      setNewCampaign({
+        name: '',
+        type: 'email',
+        subject: '',
+        audience: 'all',
+        content: ''
+      });
+      toast.success('Campaign created successfully!');
+    } catch (error) {
+      toast.error('Failed to create campaign');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendCampaign = async (campaignId: string) => {
+    setLoading(true);
+    try {
+      // Mock API call - in production this would send the campaign
+      const updatedCampaigns = campaigns.map(c => 
+        c.id === campaignId 
+          ? { ...c, status: 'sent' as const, sentCount: Math.floor(Math.random() * 3000) + 1000 }
+          : c
+      );
+      setCampaigns(updatedCampaigns);
+      toast.success('Campaign sent successfully!');
+    } catch (error) {
+      toast.error('Failed to send campaign');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePromotion = async (promoId: string) => {
+    const updatedPromotions = promotions.map(p => 
+      p.id === promoId 
+        ? { ...p, status: (p.status === 'active' ? 'expired' : 'active') as 'active' | 'expired' | 'scheduled' }
+        : p
+    );
+    setPromotions(updatedPromotions);
+    toast.success('Promotion status updated');
+  };
+
   const CampaignBuilder = () => (
     <Card>
       <CardHeader>
@@ -146,11 +267,19 @@ const MarketingDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Campaign Name</label>
-            <Input placeholder="Enter campaign name" />
+            <Input 
+              placeholder="Enter campaign name" 
+              value={newCampaign.name}
+              onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium mb-2">Campaign Type</label>
-            <select className="w-full px-3 py-2 border rounded-md bg-background">
+            <select 
+              className="w-full px-3 py-2 border rounded-md bg-background"
+              value={newCampaign.type}
+              onChange={(e) => setNewCampaign({ ...newCampaign, type: e.target.value as 'email' | 'sms' })}
+            >
               <option value="email">Email Campaign</option>
               <option value="sms">SMS Campaign</option>
             </select>
@@ -159,7 +288,11 @@ const MarketingDashboard = () => {
         
         <div>
           <label className="block text-sm font-medium mb-2">Target Audience</label>
-          <select className="w-full px-3 py-2 border rounded-md bg-background">
+          <select 
+            className="w-full px-3 py-2 border rounded-md bg-background"
+            value={newCampaign.audience}
+            onChange={(e) => setNewCampaign({ ...newCampaign, audience: e.target.value })}
+          >
             <option value="all">All Active Users (2,847)</option>
             <option value="frequent">Frequent Visitors (456)</option>
             <option value="inactive">Inactive Users (234)</option>
@@ -169,7 +302,11 @@ const MarketingDashboard = () => {
         
         <div>
           <label className="block text-sm font-medium mb-2">Subject Line</label>
-          <Input placeholder="Enter email subject or SMS preview" />
+          <Input 
+            placeholder="Enter email subject or SMS preview" 
+            value={newCampaign.subject}
+            onChange={(e) => setNewCampaign({ ...newCampaign, subject: e.target.value })}
+          />
         </div>
         
         <div>
@@ -177,12 +314,15 @@ const MarketingDashboard = () => {
           <Textarea 
             placeholder="Write your message content here..."
             className="min-h-[100px]"
+            value={newCampaign.content}
+            onChange={(e) => setNewCampaign({ ...newCampaign, content: e.target.value })}
           />
         </div>
         
         <div className="flex gap-2">
-          <Button>Send Now</Button>
-          <Button variant="outline">Save as Draft</Button>
+          <Button onClick={createCampaign} disabled={loading}>
+            {loading ? 'Creating...' : 'Save as Draft'}
+          </Button>
           <Button variant="outline">Schedule</Button>
         </div>
       </CardContent>
@@ -324,9 +464,9 @@ const MarketingDashboard = () => {
                   </div>
                 </div>
                 
-                <Button className="flex items-center gap-2">
+                <Button className="flex items-center gap-2" onClick={createPromotion} disabled={loading}>
                   <Gift className="h-4 w-4" />
-                  Create Promotion
+                  {loading ? 'Creating...' : 'Create Promotion'}
                 </Button>
               </CardContent>
             </Card>
@@ -393,7 +533,13 @@ const MarketingDashboard = () => {
                         <TableCell>
                           <div className="flex gap-1">
                             <Button variant="ghost" size="sm">Edit</Button>
-                            <Button variant="ghost" size="sm">Disable</Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => togglePromotion(promo.id)}
+                            >
+                              {promo.status === 'active' ? 'Disable' : 'Enable'}
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -451,6 +597,7 @@ const MarketingDashboard = () => {
                       <TableHead>Open Rate</TableHead>
                       <TableHead>Click Rate</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -482,6 +629,22 @@ const MarketingDashboard = () => {
                           >
                             {campaign.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {campaign.status === 'draft' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => sendCampaign(campaign.id)}
+                                disabled={loading}
+                              >
+                                Send Now
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button variant="ghost" size="sm" className="text-red-500">Delete</Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
