@@ -1,18 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Film, Settings, LogOut, User, Search, Filter, ChevronDown } from 'lucide-react';
-import { clearAuth, getCurrentUser, getMovies, type UiMovie } from '../services/api';
+import { Menu, X, Film, Settings, LogOut, User, Search } from 'lucide-react';
+import { clearAuth, getCurrentUser } from '../services/api';
 import { useSearch } from '../contexts/SearchContext';
 import { useTriggerEffect } from '../hooks/useCinematicEffects';
 import { findEffectByInput } from '../utils/cinematicEffects';
-import MovieCountdown from './MovieCountdown';
-import MovieCountdownDropdown from './MovieCountdownDropdown';
-import NavbarCountdown from './NavbarCountdown';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState(false);
-  const [movies, setMovies] = useState<UiMovie[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -20,26 +15,9 @@ const Navigation = () => {
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'admin';
   
-  const { searchTerm, setSearchTerm, selectedGenre, setSelectedGenre } = useSearch();
+  const { searchTerm, setSearchTerm } = useSearch();
   const triggerEffect = useTriggerEffect();
 
-  // Fetch movies for genre dropdown
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getMovies(false);
-        setMovies(data);
-      } catch (e) {
-        console.error('Failed to load movies for genre filter:', e);
-      }
-    })();
-  }, []);
-
-  // Extract genres from movies
-  const genres = useMemo(() => {
-    const allGenres = movies.flatMap((m) => m.genre || []);
-    return ["All", ...Array.from(new Set(allGenres))];
-  }, [movies]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,13 +33,6 @@ const Navigation = () => {
     }
   };
 
-  const handleGenreSelect = (genre: string) => {
-    setSelectedGenre(genre);
-    setIsGenreDropdownOpen(false);
-    if (location.pathname !== '/movies') {
-      navigate('/movies');
-    }
-  };
 
   const handleLogout = () => {
     clearAuth();
@@ -124,35 +95,6 @@ const Navigation = () => {
               />
             </form>
 
-            {/* Genre Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
-                className="flex items-center space-x-2 px-3 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground-secondary hover:text-cinema-red hover:border-cinema-red transition-colors"
-              >
-                <Filter className="h-4 w-4" />
-                <span>{selectedGenre}</span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              
-              {isGenreDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50">
-                  <div className="py-1 max-h-64 overflow-y-auto">
-                    {genres.map((genre) => (
-                      <button
-                        key={genre}
-                        onClick={() => handleGenreSelect(genre)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-cinema-red/10 hover:text-cinema-red transition-colors ${
-                          selectedGenre === genre ? 'bg-cinema-red text-white' : 'text-foreground-secondary'
-                        }`}
-                      >
-                        {genre}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* User Actions */}
@@ -194,13 +136,6 @@ const Navigation = () => {
             )}
           </div>
 
-          {/* Timer - Only show countdown for non-admin users */}
-          <div className="hidden lg:flex items-center space-x-4">
-            {/* Countdown components will handle their own visibility based on user role */}
-            <NavbarCountdown />
-            <MovieCountdown />
-            <MovieCountdownDropdown />
-          </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
@@ -229,39 +164,6 @@ const Navigation = () => {
                 />
               </form>
 
-              {/* Mobile Genre Filter */}
-              <div className="px-3">
-                <div className="relative">
-                  <button
-                    onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
-                    className="w-full flex items-center justify-between px-3 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground-secondary"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Filter className="h-4 w-4" />
-                      <span>{selectedGenre}</span>
-                    </div>
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  
-                  {isGenreDropdownOpen && (
-                    <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-lg shadow-lg z-50">
-                      <div className="py-1 max-h-48 overflow-y-auto">
-                        {genres.map((genre) => (
-                          <button
-                            key={genre}
-                            onClick={() => handleGenreSelect(genre)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-cinema-red/10 transition-colors ${
-                              selectedGenre === genre ? 'bg-cinema-red text-white' : 'text-foreground-secondary'
-                            }`}
-                          >
-                            {genre}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
 
               {/* Navigation Links */}
               <div className="space-y-1">
@@ -319,12 +221,6 @@ const Navigation = () => {
                   </div>
                 )}
 
-                {/* Mobile Timer - Only show for non-admin users */}
-                <div className="px-3 py-2 space-y-3">
-                  <div className="flex items-center justify-center">
-                    <MovieCountdownDropdown />
-                  </div>
-                </div>
               </div>
             </div>
           </div>

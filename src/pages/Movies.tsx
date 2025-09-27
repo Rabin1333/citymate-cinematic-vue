@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Filter, ChevronDown } from "lucide-react";
 import MovieCard from "../components/MovieCard";
 import ComingSoonMovieCard from "../components/ComingSoonMovieCard";
 import { getMovies, type UiMovie } from "../services/api";
@@ -10,6 +10,7 @@ const Movies = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState(false);
   
   const { searchTerm, selectedGenre, setSearchTerm, setSelectedGenre } = useSearch();
 
@@ -27,6 +28,16 @@ const Movies = () => {
     })();
   }, []);
 
+  // Extract genres from movies
+  const genres = useMemo(() => {
+    const allGenres = movies.flatMap((m) => m.genre || []);
+    return ["All", ...Array.from(new Set(allGenres))];
+  }, [movies]);
+
+  const handleGenreSelect = (genre: string) => {
+    setSelectedGenre(genre);
+    setIsGenreDropdownOpen(false);
+  };
 
   // filter by search + genre
   const filteredMovies = useMemo(() => {
@@ -48,12 +59,48 @@ const Movies = () => {
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">All Movies</h1>
-          <p className="text-lg text-foreground-secondary max-w-2xl mx-auto">
-            Discover your next favorite movie from our extensive collection
-          </p>
+        {/* Header with Genre Filter */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-12">
+          <div className="text-center lg:text-left mb-6 lg:mb-0">
+            <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">All Movies</h1>
+            <p className="text-lg text-foreground-secondary max-w-2xl">
+              Discover your next favorite movie from our extensive collection
+            </p>
+          </div>
+          
+          {/* Genre Filter Dropdown */}
+          <div className="flex justify-center lg:justify-end">
+            <div className="relative">
+              <button
+                onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
+                className="flex items-center space-x-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground-secondary hover:text-cinema-red hover:border-cinema-red transition-colors min-w-[140px] justify-between"
+              >
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-4 w-4" />
+                  <span>{selectedGenre}</span>
+                </div>
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              
+              {isGenreDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50">
+                  <div className="py-1 max-h-64 overflow-y-auto">
+                    {genres.map((genre) => (
+                      <button
+                        key={genre}
+                        onClick={() => handleGenreSelect(genre)}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-cinema-red/10 hover:text-cinema-red transition-colors ${
+                          selectedGenre === genre ? 'bg-cinema-red text-white' : 'text-foreground-secondary'
+                        }`}
+                      >
+                        {genre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}
