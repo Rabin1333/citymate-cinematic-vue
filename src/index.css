@@ -2,67 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* City Mate Movie Design System - Cinema Dark Theme
-All colors MUST be HSL.
+/* CityMate Futuristic Cinema Design System
+All colors MUST be HSL. Neon-inspired cinematic experience.
 */
 
 @layer base {
   :root {
-    /* Cinema Dark Theme Colors */
-    --background: 12 25% 9%;              /* #181111 - Primary dark charcoal */
-    --background-secondary: 12 25% 19%;   /* #382929 - Secondary dark brown */
-    --foreground: 0 0% 100%;              /* #ffffff - Primary white text */
-    --foreground-secondary: 12 15% 70%;   /* #b89d9f - Secondary light brown text */
+    /* Futuristic Dark Theme Colors */
+    --background: 220 15% 5%;              /* #0a0b0f - Deep space black */
+    --background-secondary: 240 12% 8%;    /* #13141a - Dark navy */
+    --background-accent: 240 15% 12%;      /* #1c1e26 - Accent dark */
+    --foreground: 0 0% 100%;               /* #ffffff - Pure white text */
+    --foreground-secondary: 240 5% 70%;    /* #b1b3b8 - Light gray text */
 
-    --card: 12 25% 19%;                   /* #382929 - Dark brown cards */
+    --card: 240 15% 12%;                   /* #1c1e26 - Dark card background */
     --card-foreground: 0 0% 100%;
 
-    --popover: 12 25% 19%;
+    --popover: 240 15% 12%;
     --popover-foreground: 0 0% 100%;
 
-    /* Cinema Red - Primary Brand Color */
-    --primary: 357 71% 54%;               /* #ea2a33 - Cinema red */
+    /* Neon Red - Primary Brand Color */
+    --primary: 0 100% 60%;                 /* #ff3333 - Bright neon red */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 357 71% 48%;         /* Darker red for hover */
+    --primary-hover: 0 85% 55%;            /* Slightly darker red */
 
-    --secondary: 12 25% 32%;              /* #533c3d - Medium brown borders */
+    --secondary: 240 20% 20%;              /* #33374d - Dark blue-gray */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 12 25% 25%;
-    --muted-foreground: 12 15% 60%;
+    --muted: 240 15% 15%;
+    --muted-foreground: 240 10% 60%;
 
-    --accent: 357 71% 54%;                /* Cinema red accent */
+    --accent: 0 100% 60%;                  /* Neon red accent */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 12 25% 32%;                 /* #533c3d - Border color */
-    --input: 12 25% 19%;                  /* Dark inputs */
-    --ring: 357 71% 54%;                  /* Red focus ring */
+    --border: 240 20% 25%;                 /* #3d4466 - Subtle border */
+    --input: 240 15% 12%;                  /* Dark inputs */
+    --ring: 0 100% 60%;                    /* Neon red focus ring */
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Cinema-specific design tokens */
-    --cinema-red: 357 71% 54%;            /* #ea2a33 */
-    --cinema-red-hover: 357 71% 48%;
-    --cinema-dark: 12 25% 9%;             /* #181111 */
-    --cinema-brown: 12 25% 19%;           /* #382929 */
-    --cinema-border: 12 25% 32%;          /* #533c3d */
+    /* Futuristic Cinema Design Tokens */
+    --neon-red: 0 100% 60%;                /* #ff3333 - Primary neon */
+    --neon-red-glow: 0 100% 50%;           /* Glow variant */
+    --neon-blue: 200 100% 60%;             /* #3399ff - Accent blue */
+    --neon-purple: 270 100% 70%;           /* #9933ff - Purple accent */
     
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(var(--cinema-dark)) 0%, hsl(var(--cinema-brown)) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(var(--cinema-brown)) 0%, hsl(var(--cinema-dark)) 100%);
-    --gradient-red: linear-gradient(135deg, hsl(var(--cinema-red)) 0%, hsl(var(--cinema-red-hover)) 100%);
+    --space-black: 220 15% 5%;             /* Deep background */
+    --space-gray: 240 15% 12%;             /* Card background */
+    --cyber-border: 240 20% 25%;           /* Borders */
     
-    /* Shadows */
-    --shadow-card: 0 8px 32px -8px hsl(var(--cinema-dark) / 0.8);
-    --shadow-button: 0 4px 16px -4px hsl(var(--cinema-red) / 0.4);
-    --shadow-glow: 0 0 32px hsl(var(--cinema-red) / 0.3);
+    /* Advanced Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--space-black)) 0%, hsl(220 20% 8%) 50%, hsl(240 25% 10%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(var(--space-gray)) 0%, hsl(240 18% 10%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(var(--neon-red)) 0%, hsl(var(--neon-red-glow)) 100%);
+    --gradient-cyber: linear-gradient(90deg, transparent 0%, hsl(var(--neon-red) / 0.1) 50%, transparent 100%);
     
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Futuristic Shadows & Glows */
+    --shadow-card: 0 8px 40px -12px hsl(var(--space-black) / 0.8);
+    --shadow-neon: 0 0 20px hsl(var(--neon-red) / 0.5), 0 0 40px hsl(var(--neon-red) / 0.2);
+    --shadow-glow-lg: 0 0 60px hsl(var(--neon-red) / 0.4);
+    --shadow-hover: 0 12px 50px -8px hsl(var(--neon-red) / 0.3);
+    
+    /* Advanced Animations */
+    --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     --transition-quick: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 
@@ -102,64 +109,153 @@ All colors MUST be HSL.
 }
 
 @layer components {
-  /* Cinema Button Variants */
+  /* Futuristic Neon Button Variants */
+  .btn-neon {
+    @apply relative bg-transparent border-2 border-neon-red text-neon-red font-semibold px-8 py-4 rounded-xl;
+    @apply overflow-hidden transition-all duration-400 hover:text-white hover:scale-105;
+    @apply focus:outline-none focus:ring-2 focus:ring-neon-red/50;
+    box-shadow: 0 0 20px hsl(var(--neon-red) / 0.3);
+  }
+  
+  .btn-neon::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-neon-red to-neon-red-glow opacity-0;
+    @apply transition-opacity duration-400;
+    z-index: -1;
+  }
+  
+  .btn-neon:hover::before {
+    @apply opacity-100;
+  }
+  
+  .btn-neon:hover {
+    box-shadow: var(--shadow-neon), var(--shadow-glow-lg);
+    transform: translateY(-2px) scale(1.05);
+  }
+  
   .btn-cinema {
-    @apply bg-gradient-to-r from-cinema-red to-cinema-red-hover text-white font-medium px-6 py-3 rounded-lg;
-    @apply transition-all duration-300 hover:shadow-[var(--shadow-button)] hover:scale-105;
-    @apply focus:outline-none focus:ring-2 focus:ring-cinema-red/50;
+    @apply btn-neon;
   }
   
   .btn-cinema-outline {
-    @apply border-2 border-cinema-red text-cinema-red font-medium px-6 py-3 rounded-lg;
-    @apply transition-all duration-300 hover:bg-cinema-red hover:text-white;
-    @apply focus:outline-none focus:ring-2 focus:ring-cinema-red/50;
+    @apply border border-neon-red/50 text-neon-red/80 font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 hover:border-neon-red hover:text-neon-red hover:shadow-[var(--shadow-neon)];
+    @apply focus:outline-none focus:ring-2 focus:ring-neon-red/50;
   }
   
-  /* Movie Card Styles */
+  /* Futuristic Movie Card Styles */
   .movie-card {
-    @apply bg-card rounded-xl overflow-hidden transition-transform duration-300;
-    @apply hover:scale-105 hover:shadow-[var(--shadow-card)];
-    @apply border border-border;
+    @apply bg-card rounded-2xl overflow-hidden border border-cyber-border/50;
+    @apply transition-all duration-400 hover:scale-[1.02] hover:border-neon-red/50;
+    @apply relative group;
+    box-shadow: var(--shadow-card);
   }
   
-  /* Input Styles */
-  .input-cinema {
-    @apply bg-input text-foreground border border-border rounded-lg px-4 py-3;
-    @apply focus:outline-none focus:ring-2 focus:ring-cinema-red/50 focus:border-cinema-red;
-    @apply placeholder:text-muted-foreground;
+  .movie-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-400 pointer-events-none;
+    background: var(--gradient-cyber);
+    z-index: 1;
+  }
+  
+  .movie-card:hover::before {
+    @apply opacity-100;
+  }
+  
+  .movie-card:hover {
+    box-shadow: var(--shadow-hover), var(--shadow-neon);
+  }
+  
+  /* Neon Tag Styles */
+  .tag-neon {
+    @apply px-3 py-1 rounded-full text-xs font-medium border;
+    @apply bg-neon-red/10 border-neon-red/30 text-neon-red;
+    @apply transition-all duration-300 hover:bg-neon-red/20 hover:border-neon-red/50;
+    box-shadow: 0 0 10px hsl(var(--neon-red) / 0.2);
+  }
+  
+  /* Futuristic Input Styles */
+  .input-cyber {
+    @apply bg-space-gray text-foreground border border-cyber-border rounded-lg px-4 py-3;
+    @apply focus:outline-none focus:ring-2 focus:ring-neon-red/50 focus:border-neon-red;
+    @apply placeholder:text-muted-foreground transition-all duration-300;
+    box-shadow: inset 0 2px 4px hsl(var(--space-black) / 0.3);
+  }
+  
+  .input-cyber:focus {
+    box-shadow: inset 0 2px 4px hsl(var(--space-black) / 0.3), 0 0 20px hsl(var(--neon-red) / 0.2);
+  }
+  
+  /* Navigation Glow Effect */
+  .nav-link {
+    @apply relative text-foreground-secondary transition-all duration-300;
+    @apply hover:text-neon-red;
+  }
+  
+  .nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-neon-red transition-all duration-300;
+    box-shadow: 0 0 10px hsl(var(--neon-red) / 0.8);
+  }
+  
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+  
+  .nav-link.active::after {
+    @apply w-full;
   }
   
   /* Seat Selection Styles */
   .seat {
     @apply w-8 h-8 rounded-t-lg border-2 transition-all duration-200 cursor-pointer;
+    @apply bg-space-gray border-cyber-border;
   }
   
-  .seat-available {
-    @apply bg-muted border-border hover:bg-cinema-red/20 hover:border-cinema-red;
+  .seat-available:hover {
+    @apply border-neon-red bg-neon-red/10;
+    box-shadow: 0 0 15px hsl(var(--neon-red) / 0.4);
   }
   
   .seat-selected {
-    @apply bg-cinema-red border-cinema-red text-white;
+    @apply bg-neon-red border-neon-red text-white;
+    box-shadow: var(--shadow-neon);
   }
   
   .seat-booked {
-    @apply bg-destructive border-destructive cursor-not-allowed opacity-60;
+    @apply bg-destructive border-destructive cursor-not-allowed opacity-40;
+  }
+  
+  /* Countdown Timer Style */
+  .countdown-timer {
+    @apply bg-space-gray/50 backdrop-blur-sm border border-neon-red/30 rounded-lg px-3 py-2;
+    @apply text-neon-red font-mono text-sm;
+    box-shadow: 0 0 15px hsl(var(--neon-red) / 0.2);
   }
 }
 
-/* Custom Animations */
+/* Futuristic Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes shimmer {
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--neon-red) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(var(--neon-red) / 0.6), 0 0 60px hsl(var(--neon-red) / 0.2);
+  }
+}
+
+@keyframes cyberScan {
   0% {
     background-position: -200px 0;
   }
@@ -168,12 +264,65 @@ All colors MUST be HSL.
   }
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.animate-shimmer {
-  animation: shimmer 2s linear infinite;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.animate-neon-pulse {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+.animate-cyber-scan {
+  animation: cyberScan 2s linear infinite;
+  background: linear-gradient(90deg, transparent, hsl(var(--neon-red) / 0.15), transparent);
   background-size: 200px 100%;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Background Effects */
+.bg-cyber-grid {
+  background-image: 
+    linear-gradient(hsl(var(--cyber-border) / 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--cyber-border) / 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.bg-space-gradient {
+  background: var(--gradient-hero);
+}
+
+/* Text Effects */
+.text-neon-glow {
+  text-shadow: 0 0 10px hsl(var(--neon-red) / 0.8), 0 0 20px hsl(var(--neon-red) / 0.4);
+}
+
+.text-cyber-glow {
+  text-shadow: 0 0 15px hsl(var(--neon-blue) / 0.6);
 }

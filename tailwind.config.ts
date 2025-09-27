@@ -28,6 +28,7 @@ export default {
 				background: {
 					DEFAULT: 'hsl(var(--background))',
 					secondary: 'hsl(var(--background-secondary))',
+					accent: 'hsl(var(--background-accent))',
 				},
 				foreground: {
 					DEFAULT: 'hsl(var(--foreground))',
@@ -62,24 +63,37 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// Cinema-specific colors
-				'cinema-red': {
-					DEFAULT: 'hsl(var(--cinema-red))',
-					hover: 'hsl(var(--cinema-red-hover))',
+				// Futuristic Neon Colors
+				'neon-red': {
+					DEFAULT: 'hsl(var(--neon-red))',
+					glow: 'hsl(var(--neon-red-glow))',
 				},
-				'cinema-dark': 'hsl(var(--cinema-dark))',
-				'cinema-brown': 'hsl(var(--cinema-brown))',
-				'cinema-border': 'hsl(var(--cinema-border))',
+				'neon-blue': 'hsl(var(--neon-blue))',
+				'neon-purple': 'hsl(var(--neon-purple))',
+				'space-black': 'hsl(var(--space-black))',
+				'space-gray': 'hsl(var(--space-gray))',
+				'cyber-border': 'hsl(var(--cyber-border))',
+				// Legacy cinema colors (mapped to new tokens)
+				'cinema-red': {
+					DEFAULT: 'hsl(var(--neon-red))',
+					hover: 'hsl(var(--neon-red-glow))',
+				},
+				'cinema-dark': 'hsl(var(--space-black))',
+				'cinema-brown': 'hsl(var(--space-gray))',
+				'cinema-border': 'hsl(var(--cyber-border))',
 			},
 			backgroundImage: {
 				'gradient-hero': 'var(--gradient-hero)',
 				'gradient-card': 'var(--gradient-card)',
-				'gradient-red': 'var(--gradient-red)',
+				'gradient-neon': 'var(--gradient-neon)',
+				'gradient-cyber': 'var(--gradient-cyber)',
+				'cyber-grid': 'linear-gradient(hsl(var(--cyber-border) / 0.1) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--cyber-border) / 0.1) 1px, transparent 1px)',
 			},
 			boxShadow: {
 				'card': 'var(--shadow-card)',
-				'button': 'var(--shadow-button)',
-				'glow': 'var(--shadow-glow)',
+				'neon': 'var(--shadow-neon)',
+				'glow-lg': 'var(--shadow-glow-lg)',
+				'hover': 'var(--shadow-hover)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -107,8 +121,11 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in-up': 'fadeInUp 0.6s ease-out',
-				'shimmer': 'shimmer 2s linear infinite',
+				'fade-in-up': 'fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1)',
+				'neon-pulse': 'neonPulse 2s ease-in-out infinite',
+				'cyber-scan': 'cyberScan 2s linear infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'slide-in-right': 'slideInFromRight 0.6s cubic-bezier(0.23, 1, 0.32, 1)',
 			}
 		}
 	},

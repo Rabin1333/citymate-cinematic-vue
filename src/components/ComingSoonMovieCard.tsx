@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Star, Calendar, Bell } from "lucide-react";
 import ReminderModal from "./ReminderModal";
@@ -20,6 +20,7 @@ interface ComingSoonMovieCardProps {
 
 const ComingSoonMovieCard = ({ movie, className = "", onReminderSet }: ComingSoonMovieCardProps) => {
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+  const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number }>({ days: 0, hours: 0, minutes: 0 });
   
   // id may be number or string; use a string for routes/keys
   const idStr = String(movie.id);
@@ -35,6 +36,28 @@ const ComingSoonMovieCard = ({ movie, className = "", onReminderSet }: ComingSoo
   const releaseDate = movie.releaseDate ? new Date(movie.releaseDate) : null;
   const isFutureRelease = releaseDate && releaseDate > new Date();
 
+  // Countdown timer effect
+  useEffect(() => {
+    if (!isFutureRelease || !releaseDate) return;
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const distance = releaseDate.getTime() - now;
+
+      if (distance > 0) {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        setCountdown({ days, hours, minutes });
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [isFutureRelease, releaseDate]);
+
   const handleBellClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -43,58 +66,79 @@ const ComingSoonMovieCard = ({ movie, className = "", onReminderSet }: ComingSoo
 
   return (
     <>
-      <div className={`movie-card group ${className} relative`}>
+      <div className={`movie-card group ${className} relative overflow-hidden`}>
+        {/* Cyber Glow Border */}
+        <div className="absolute inset-0 bg-gradient-cyber opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        
         {/* Bell Icon for Coming Soon Movies */}
         {isComingSoon && isFutureRelease && (
           <button
             onClick={handleBellClick}
-            className="absolute top-3 right-3 z-10 bg-cinema-red hover:bg-cinema-red-hover text-white p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+            className="absolute top-4 right-4 z-20 bg-neon-red hover:bg-neon-red-glow text-white p-3 rounded-full transition-all duration-300 hover:scale-110 animate-neon-pulse shadow-neon"
             aria-label={`Set reminder for ${movie.title}`}
           >
-            <Bell className="h-4 w-4" />
+            <Bell className="h-5 w-5" />
           </button>
         )}
 
-        <div className="relative overflow-hidden">
+        {/* Countdown Timer */}
+        {isComingSoon && isFutureRelease && (
+          <div className="absolute top-4 left-4 z-20 countdown-timer">
+            <div className="text-xs font-mono">
+              {countdown.days}d {countdown.hours}h {countdown.minutes}m
+            </div>
+          </div>
+        )}
+
+        <div className="relative overflow-hidden rounded-t-2xl">
           <img
             src={posterSrc}
             alt={movie.title}
-            className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-80 object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Neon Overlay Effect */}
+          <div className="absolute inset-0 bg-gradient-to-t from-space-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
+          
+          {/* Scan Line Animation */}
+          <div className="absolute inset-0 bg-gradient-cyber opacity-0 group-hover:opacity-50 animate-cyber-scan" />
 
           {/* Movie Info Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-            <div className="flex items-center gap-2 text-white/80 text-sm mb-2">
-              <Clock className="h-4 w-4" />
-              <span>{movie.duration}</span>
-              <Star className="h-4 w-4 ml-2" />
-              <span>{movie.rating}</span>
+          <div className="absolute bottom-0 left-0 right-0 p-5 transform translate-y-full group-hover:translate-y-0 transition-all duration-400">
+            <div className="flex items-center gap-3 text-foreground-secondary text-sm mb-3">
+              <div className="flex items-center gap-1 bg-space-gray/50 px-2 py-1 rounded-lg border border-cyber-border/50">
+                <Clock className="h-4 w-4" />
+                <span>{movie.duration}</span>
+              </div>
+              <div className="flex items-center gap-1 bg-space-gray/50 px-2 py-1 rounded-lg border border-cyber-border/50">
+                <Star className="h-4 w-4 text-neon-red" />
+                <span>{movie.rating}</span>
+              </div>
             </div>
-            <p className="text-white/90 text-sm line-clamp-2 mb-3">{movie.synopsis}</p>
+            <p className="text-foreground text-sm line-clamp-2 mb-4 leading-relaxed">{movie.synopsis}</p>
             
             {isComingSoon ? (
-              <div className="btn-cinema w-full text-center inline-block opacity-50 cursor-not-allowed">
+              <div className="btn-cinema-outline w-full text-center inline-block opacity-70 cursor-not-allowed">
                 Coming Soon
               </div>
             ) : (
-              <Link to={`/movie/${idStr}`} className="btn-cinema w-full text-center inline-block">
+              <Link to={`/movie/${idStr}`} className="btn-neon w-full text-center inline-block text-sm">
                 Book Now
               </Link>
             )}
           </div>
         </div>
 
-        <div className="p-4">
-          <h3 className="font-bold text-lg text-foreground mb-2 line-clamp-1">
+        <div className="p-5 bg-gradient-to-b from-space-gray to-space-black">
+          <h3 className="font-bold text-xl text-foreground mb-3 line-clamp-1 group-hover:text-neon-red transition-colors duration-300">
             {movie.title}
           </h3>
 
-          <div className="flex flex-wrap gap-1 mb-3">
+          <div className="flex flex-wrap gap-2 mb-4">
             {(movie.genre || []).slice(0, 2).map((g) => (
               <span
                 key={g}
-                className="px-2 py-1 bg-cinema-red/20 text-cinema-red text-xs rounded-full"
+                className="tag-neon"
               >
                 {g}
               </span>
@@ -102,15 +146,15 @@ const ComingSoonMovieCard = ({ movie, className = "", onReminderSet }: ComingSoo
           </div>
 
           <div className="flex items-center justify-between text-sm text-foreground-secondary">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               {isComingSoon && releaseDate ? (
-                <span>{releaseDate.toLocaleDateString()}</span>
+                <span className="font-medium">{releaseDate.toLocaleDateString()}</span>
               ) : (
-                <span>{movie.releaseYear}</span>
+                <span className="font-medium">{movie.releaseYear}</span>
               )}
             </div>
-            <span>From ${movie.pricing.regular}</span>
+            <span className="text-neon-red font-bold">From ${movie.pricing.regular}</span>
           </div>
         </div>
       </div>
