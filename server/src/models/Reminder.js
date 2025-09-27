@@ -8,9 +8,10 @@ const ReminderSchema = new mongoose.Schema({
     required: true
   },
   movieId: {
-    type: Number,
-    required: true
-  },
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Movie",
+  required: true
+},
   movieTitle: {
     type: String,
     required: true

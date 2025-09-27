@@ -61,7 +61,7 @@ router.post("/", requireAuth, async (req, res) => {
     // Get movie title from database or request
     let movieTitle = req.body.movieTitle;
     if (!movieTitle) {
-      const movie = await Movie.findOne({ id: movieId });
+      const movie = await Movie.findById(movieId);
       movieTitle = movie ? movie.title : `Movie ${movieId}`;
     }
 
@@ -131,7 +131,7 @@ router.delete("/:movieId", requireAuth, async (req, res) => {
     const userId = req.user.id;
 
     const reminder = await Reminder.findOneAndUpdate(
-      { userId, movieId: parseInt(movieId) },
+       { userId, movieId },
       { status: "cancelled" },
       { new: true }
     );

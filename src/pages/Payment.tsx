@@ -5,6 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import SpinWheelModal from "@/components/SpinWheelModal";
 import FoodMenu from "@/components/FoodMenu";
 import ParkingSection from "@/components/ParkingSection";
+const normalizeCinemaId = (c?: string) => {
+  const s = (c || "").toLowerCase();
+  if (s.includes("downtown")) return "downtown";
+  return s || "downtown"; // fallback
+};
 
 interface BookingData {
   _id: string;
@@ -247,11 +252,11 @@ const Payment = () => {
         {/* Parking Section */}
         <div className="mt-8">
           <ParkingSection
-            bookingId={booking._id}
-            cinema={booking.cinema}
-            showtime={booking.showtime}
-            onParkingChange={setParkingReservation}
-          />
+  bookingId={(booking as any)._id || (booking as any).id}
+  cinema={normalizeCinemaId(booking.cinema || (booking as any).cinemaId)}   // force "downtown"
+  showtime={booking.showtime}
+  onParkingChange={setParkingReservation}
+/>
         </div>
 
         <SpinWheelModal

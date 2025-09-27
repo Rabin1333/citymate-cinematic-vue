@@ -207,12 +207,12 @@ const bcrypt = require("bcryptjs");
         releaseDate: plusDays(14), // 2 weeks ahead
       },
       {
-        title: "Future Noir",
+        title: "Prachanda: The Mastermind",
         genre: ["Sci-Fi", "Thriller"],
         rating: "M",
         duration: "130 min",
         releaseYear: "2026",
-        poster: "/posters/future-noir.jpg",
+        poster: "/posters/prachanda.jpg",
         synopsis: "A detective hunts truth across parallel timelines.",
         director: "J. Doe",
         cast: ["TBD"],

@@ -121,10 +121,12 @@ const ComingSoonMovieCard = ({ movie, className = "", onReminderSet }: ComingSoo
           isOpen={isReminderModalOpen}
           onClose={() => setIsReminderModalOpen(false)}
           movie={{
-            id: Number(movie.id),
-            title: movie.title,
-            releaseDate: movie.releaseDate!
-          }}
+  id: String(movie.id),
+  title: movie.title,
+  releaseDate: movie.releaseDate
+    ? new Date(movie.releaseDate).toISOString()
+    : ""
+}}
           onReminderSet={() => {
             onReminderSet?.();
             setIsReminderModalOpen(false);

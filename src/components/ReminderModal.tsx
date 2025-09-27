@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react';
-import { X, Calendar, Mail, Phone, Download, ExternalLink } from 'lucide-react';
+import { Calendar, Mail, Phone, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { useToast } from '../hooks/use-toast';
-import { createReminder, getUserProfile } from '../services/api';
-import { getCurrentUser } from '../services/api';
-import { downloadIcsFile, generateGoogleCalendarUrl, createMovieReleaseEvent, formatDateForTimezone } from '../utils/calendar';
+import { createReminder, getUserProfile, getCurrentUser } from '../services/api';
+import {
+  downloadIcsFile,
+  generateGoogleCalendarUrl,
+  createMovieReleaseEvent,
+  formatDateForTimezone,
+} from '../utils/calendar';
 
 interface ReminderModalProps {
   isOpen: boolean;
   onClose: () => void;
   movie: {
-    id: number;
+    id: string;           // <-- FIX: ObjectId is a string
     title: string;
-    releaseDate: string;
+    releaseDate: string;  // can be ISO or parseable string
   };
   onReminderSet?: () => void;
 }
@@ -28,7 +32,7 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
-  
+
   const currentUser = getCurrentUser();
   const isLoggedIn = !!currentUser;
 
@@ -36,12 +40,12 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
   useEffect(() => {
     if (isLoggedIn && isOpen) {
       getUserProfile()
-        .then(profile => {
+        .then((profile) => {
           setUserProfile(profile);
           setEmail(profile.email || '');
           setPhone(profile.phone || '');
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Failed to load profile:', err);
         });
     }
@@ -56,19 +60,15 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
   }, [isOpen]);
 
   const handleChannelChange = (channel: string, checked: boolean) => {
-    if (checked) {
-      setChannels(prev => [...prev, channel]);
-    } else {
-      setChannels(prev => prev.filter(c => c !== channel));
-    }
+    setChannels((prev) => (checked ? [...prev, channel] : prev.filter((c) => c !== channel)));
   };
 
   const validateForm = () => {
     if (channels.length === 0) {
       toast({
-        title: "Select a reminder method",
-        description: "Please select at least one way to be reminded (Email or SMS).",
-        variant: "destructive"
+        title: 'Select a reminder method',
+        description: 'Please select at least one way to be reminded (Email or SMS).',
+        variant: 'destructive',
       });
       return false;
     }
@@ -77,21 +77,22 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!email || !emailRegex.test(email)) {
         toast({
-          title: "Invalid email",
-          description: "Please enter a valid email address.",
-          variant: "destructive"
+          title: 'Invalid email',
+          description: 'Please enter a valid email address.',
+          variant: 'destructive',
         });
         return false;
       }
     }
 
     if (channels.includes('sms')) {
-      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-      if (!phone || !phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+      const phoneRegex = /^[+]?[\d\s\-()]{6,16}$/;
+      const normalized = phone.replace(/[\s\-()]/g, '');
+      if (!phone || !phoneRegex.test(phone) || normalized.length < 6) {
         toast({
-          title: "Invalid phone number",
-          description: "Please enter a valid phone number.",
-          variant: "destructive"
+          title: 'Invalid phone number',
+          description: 'Please enter a valid phone number.',
+          variant: 'destructive',
         });
         return false;
       }
@@ -103,64 +104,77 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
   const handleSaveReminder = async () => {
     if (!validateForm()) return;
 
+    // Normalize releaseDate to ISO (string)
+    const releaseISO = new Date(movie.releaseDate).toISOString();
+    const timezone =
+      Intl.DateTimeFormat().resolvedOptions().timeZone || 'Australia/Sydney';
+
+    if (!releaseISO || !movie.id) {
+      toast({
+        title: 'Missing movie or release date',
+        description: 'Please check the movie and date and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Anonymous users: save local reminder
     if (!isLoggedIn) {
-      // Save to localStorage for anonymous users
       const localReminders = JSON.parse(localStorage.getItem('movieReminders') || '[]');
       const newReminder = {
-        movieId: movie.id,
+        movieId: movie.id,       // <-- FIX: send string id
         movieTitle: movie.title,
-        releaseDate: movie.releaseDate,
+        releaseDate: releaseISO, // <-- FIX: send ISO
         channels,
         email: channels.includes('email') ? email : undefined,
         phone: channels.includes('sms') ? phone : undefined,
-        createdAt: new Date().toISOString()
+        timezone,
+        createdAt: new Date().toISOString(),
       };
-      
+
       // Remove existing reminder for this movie if any
       const filteredReminders = localReminders.filter((r: any) => r.movieId !== movie.id);
       filteredReminders.push(newReminder);
       localStorage.setItem('movieReminders', JSON.stringify(filteredReminders));
-      
+
       toast({
-        title: "Reminder set!",
-        description: "Your local reminder has been saved. Sign in to sync across devices."
+        title: 'Reminder set!',
+        description: 'Your local reminder has been saved. Sign in to sync across devices.',
       });
-      
+
       onReminderSet?.();
       onClose();
       return;
     }
 
+    // Logged-in users: send to API
     setLoading(true);
     try {
-      // Ensure we have all required fields - convert movieId to number if needed
       const reminderData = {
-        movieId: typeof movie.id === 'string' ? parseInt(movie.id) : movie.id,
+        movieId: movie.id,         // <-- FIX: no parseInt
         movieTitle: movie.title,
-        releaseDate: movie.releaseDate,
-        channels,
+        releaseDate: releaseISO,   // <-- FIX: ISO string
+        channels,                  // string[]
         ...(channels.includes('email') && { email }),
         ...(channels.includes('sms') && { phone }),
-        timezone: 'Australia/Sydney'
+        timezone,
       };
-
-      console.log('Sending reminder data:', reminderData);
 
       await createReminder(reminderData);
 
       toast({
-        title: "Reminder set!",
-        description: "You'll be notified when this movie is released."
+        title: 'Reminder set!',
+        description: "You'll be notified when this movie is released.",
       });
 
       onReminderSet?.();
       onClose();
     } catch (error: any) {
-      console.error("Failed to create reminder:", error);
+      console.error('Failed to create reminder:', error);
       toast({
-        title: "Failed to set reminder",
-        description: error.message || "Please check your connection and try again.",
-        variant: "destructive"
+        title: 'Failed to set reminder',
+        description: error?.message || 'Please check your connection and try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -168,27 +182,36 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
   };
 
   const handleAddToCalendar = () => {
-    const releaseDate = new Date(movie.releaseDate);
-    const calendarEvent = createMovieReleaseEvent(movie.title, releaseDate, window.location.origin + `/movie/${movie.id}`);
-    
-    downloadIcsFile(calendarEvent, `${movie.title.replace(/[^a-zA-Z0-9]/g, '-')}-release.ics`);
-    
+    const dateObj = new Date(movie.releaseDate);
+    const calendarEvent = createMovieReleaseEvent(
+      movie.title,
+      dateObj,
+      window.location.origin + `/movie/${movie.id}`,
+    );
+
+    downloadIcsFile(
+      calendarEvent,
+      `${movie.title.replace(/[^a-zA-Z0-9]/g, '-')}-release.ics`,
+    );
+
     toast({
-      title: "Calendar file downloaded",
-      description: "The .ics file has been downloaded. You can import it to your calendar app."
+      title: 'Calendar file downloaded',
+      description: 'The .ics file has been downloaded. You can import it to your calendar app.',
     });
   };
 
   const handleGoogleCalendar = () => {
-    const releaseDate = new Date(movie.releaseDate);
-    const calendarEvent = createMovieReleaseEvent(movie.title, releaseDate, window.location.origin + `/movie/${movie.id}`);
+    const dateObj = new Date(movie.releaseDate);
+    const calendarEvent = createMovieReleaseEvent(
+      movie.title,
+      dateObj,
+      window.location.origin + `/movie/${movie.id}`,
+    );
     const googleUrl = generateGoogleCalendarUrl(calendarEvent);
-    
     window.open(googleUrl, '_blank');
   };
 
-  const releaseDate = new Date(movie.releaseDate);
-  const formattedDate = formatDateForTimezone(releaseDate);
+  const formattedDate = formatDateForTimezone(new Date(movie.releaseDate));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -210,13 +233,15 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
           {/* Reminder Channels */}
           <div className="space-y-4">
             <Label className="text-sm font-medium">How would you like to be reminded?</Label>
-            
+
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="email"
                   checked={channels.includes('email')}
-                  onCheckedChange={(checked) => handleChannelChange('email', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleChannelChange('email', Boolean(checked))
+                  }
                 />
                 <Label htmlFor="email" className="flex items-center gap-2 cursor-pointer">
                   <Mail className="h-4 w-4" />
@@ -238,7 +263,9 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
                 <Checkbox
                   id="sms"
                   checked={channels.includes('sms')}
-                  onCheckedChange={(checked) => handleChannelChange('sms', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleChannelChange('sms', Boolean(checked))
+                  }
                 />
                 <Label htmlFor="sms" className="flex items-center gap-2 cursor-pointer">
                   <Phone className="h-4 w-4" />
@@ -297,11 +324,7 @@ const ReminderModal = ({ isOpen, onClose, movie, onReminderSet }: ReminderModalP
           <Button variant="outline" onClick={onClose} className="flex-1">
             Cancel
           </Button>
-          <Button 
-            onClick={handleSaveReminder} 
-            disabled={loading}
-            className="flex-1"
-          >
+          <Button onClick={handleSaveReminder} disabled={loading} className="flex-1">
             {loading ? 'Saving...' : 'Save Reminder'}
           </Button>
         </div>
