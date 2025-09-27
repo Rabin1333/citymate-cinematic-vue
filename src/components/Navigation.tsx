@@ -1,17 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Film, Settings, LogOut, User, Search, Filter, ChevronDown, Home, Calendar, MapPin, Bell } from 'lucide-react';
-import { clearAuth, getCurrentUser, getMovies, type UiMovie } from '../services/api';
+import { Menu, X, Film, Settings, LogOut, User, Search, Home, Calendar, Bell } from 'lucide-react';
+import { clearAuth, getCurrentUser } from '../services/api';
 import { useSearch } from '../contexts/SearchContext';
 import { useTriggerEffect } from '../hooks/useCinematicEffects';
 import { findEffectByInput } from '../utils/cinematicEffects';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [movies, setMovies] = useState<UiMovie[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -19,7 +17,7 @@ const Navigation = () => {
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.role === 'admin';
   
-  const { searchTerm, setSearchTerm, selectedGenre, setSelectedGenre } = useSearch();
+  const { searchTerm, setSearchTerm } = useSearch();
   const triggerEffect = useTriggerEffect();
 
   // Handle scroll behavior
@@ -46,23 +44,6 @@ const Navigation = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSearchExpanded]);
 
-  // Fetch movies for genre dropdown
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getMovies(false);
-        setMovies(data);
-      } catch (e) {
-        console.error('Failed to load movies for genre filter:', e);
-      }
-    })();
-  }, []);
-
-  // Extract genres from movies
-  const genres = useMemo(() => {
-    const allGenres = movies.flatMap((m) => m.genre || []);
-    return ["All", ...Array.from(new Set(allGenres))];
-  }, [movies]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,13 +60,6 @@ const Navigation = () => {
     setIsSearchExpanded(false);
   };
 
-  const handleGenreSelect = (genre: string) => {
-    setSelectedGenre(genre);
-    setIsGenreDropdownOpen(false);
-    if (location.pathname !== '/movies') {
-      navigate('/movies');
-    }
-  };
 
   const handleLogout = () => {
     clearAuth();
@@ -143,15 +117,7 @@ const Navigation = () => {
             </nav>
           </div>
 
-          {/* Center - Context Chip */}
-          <div className="hidden lg:flex items-center">
-            <div className="context-chip flex items-center space-x-1">
-              <MapPin className="h-3 w-3" />
-              <span>Downtown Cinema • Today</span>
-            </div>
-          </div>
-
-          {/* Right Cluster - Search, Genre, Profile, Actions */}
+          {/* Right Cluster - Search, Profile, Actions */}
           <div className="flex items-center space-x-4">
             {/* Search Morph */}
             <div className={`search-morph ${isSearchExpanded ? 'expanded' : ''} relative`}>
@@ -179,36 +145,6 @@ const Navigation = () => {
               )}
             </div>
 
-            {/* Genre Dropdown */}
-            <div className="relative hidden md:block">
-              <button
-                onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
-                className="nav-link flex items-center space-x-2 px-3 py-2 rounded-lg border border-border hover:border-cinema-red/50 transition-colors"
-                aria-label="Filter by genre"
-              >
-                <Filter className="h-4 w-4" />
-                <span className="text-sm">{selectedGenre}</span>
-                <ChevronDown className={`h-4 w-4 glow-caret transition-transform ${isGenreDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {isGenreDropdownOpen && (
-                <div className="glass-dropdown absolute right-0 top-full mt-2 w-48 rounded-lg z-50 overflow-hidden">
-                  <div className="py-1 max-h-64 overflow-y-auto">
-                    {genres.map((genre) => (
-                      <button
-                        key={genre}
-                        onClick={() => handleGenreSelect(genre)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-cinema-red/10 hover:text-cinema-red transition-colors ${
-                          selectedGenre === genre ? 'bg-cinema-red/20 text-cinema-red font-medium' : 'text-foreground-secondary'
-                        }`}
-                      >
-                        {genre}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Notifications/Rewards - Placeholder */}
             {isLoggedIn && (
@@ -292,37 +228,6 @@ const Navigation = () => {
                 />
               </form>
 
-              {/* Mobile Genre Filter */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-card/50 backdrop-blur-sm border border-border rounded-lg text-sm font-medium text-foreground-secondary"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Filter className="h-4 w-4" />
-                    <span>{selectedGenre}</span>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isGenreDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isGenreDropdownOpen && (
-                  <div className="glass-dropdown mt-2 w-full rounded-lg overflow-hidden">
-                    <div className="py-1 max-h-48 overflow-y-auto">
-                      {genres.map((genre) => (
-                        <button
-                          key={genre}
-                          onClick={() => handleGenreSelect(genre)}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-cinema-red/10 transition-colors ${
-                            selectedGenre === genre ? 'bg-cinema-red/20 text-cinema-red font-medium' : 'text-foreground-secondary'
-                          }`}
-                        >
-                          {genre}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
 
               {/* Navigation Links */}
               <div className="space-y-1">
