@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Upload, Save, X, BarChart3, Users, Monitor, TrendingUp, MessageSquare, Building } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Save, X, BarChart3, Users, Monitor, TrendingUp, MessageSquare, Building, Lightbulb, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,9 @@ const Admin = () => {
     pricing: { regular: number; premium: number; vip: number };
     status: 'now-showing' | 'coming-soon';
     featured: boolean;
+    releaseDate?: string;
+    forceOpenPredictions?: boolean;
+    forceCloseReviews?: boolean;
   }>({
     title: '',
     genre: [],
@@ -44,7 +47,10 @@ const Admin = () => {
     showtimes: [],
     pricing: { regular: 12, premium: 18, vip: 25 },
     status: 'now-showing',
-    featured: false
+    featured: false,
+    releaseDate: '',
+    forceOpenPredictions: false,
+    forceCloseReviews: false
   });
 
   useEffect(() => {
@@ -120,7 +126,8 @@ const Admin = () => {
       showtimes: Array.isArray(formData.showtimes) ? formData.showtimes : (typeof formData.showtimes === 'string' ? formData.showtimes.split(',').map(s => s.trim()) : []),
       pricing: formData.pricing || { regular: 12, premium: 18, vip: 25 },
       status: formData.status || 'now-showing',
-      featured: formData.featured || false
+      featured: formData.featured || false,
+      releaseDate: formData.releaseDate || undefined
     };
 
     try {
@@ -163,7 +170,10 @@ const Admin = () => {
       showtimes: [],
       pricing: { regular: 12, premium: 18, vip: 25 },
       status: 'now-showing',
-      featured: false
+      featured: false,
+      releaseDate: '',
+      forceOpenPredictions: false,
+      forceCloseReviews: false
     });
     setIsEditing(false);
     setEditingMovie(null);
@@ -249,11 +259,21 @@ const Admin = () => {
           </Card>
           
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link to="/admin/reports">
+            <Link to="/admin/predictions">
               <CardContent className="p-6 text-center">
-                <Building className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <h3 className="font-semibold">Reports</h3>
-                <p className="text-sm text-muted-foreground">Custom Analytics</p>
+                <Lightbulb className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Predictions</h3>
+                <p className="text-sm text-muted-foreground">Manage User Predictions</p>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link to="/admin/reviews">
+              <CardContent className="p-6 text-center">
+                <Star className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <h3 className="font-semibold">Reviews</h3>
+                <p className="text-sm text-muted-foreground">Moderate Reviews</p>
               </CardContent>
             </Link>
           </Card>
@@ -371,17 +391,27 @@ const Admin = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-foreground-secondary mb-2">Status</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'now-showing' | 'coming-soon' })}
-                  className="input-cinema w-full"
-                >
-                  <option value="now-showing">Now Showing</option>
-                  <option value="coming-soon">Coming Soon</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-foreground-secondary mb-2">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'now-showing' | 'coming-soon' })}
+                    className="input-cinema w-full"
+                  >
+                    <option value="now-showing">Now Showing</option>
+                    <option value="coming-soon">Coming Soon</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-foreground-secondary mb-2">Release Date</label>
+                  <input
+                    type="date"
+                    value={formData.releaseDate || ''}
+                    onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })}
+                    className="input-cinema w-full"
+                  />
+                </div>
 
               <div className="flex items-center space-x-2">
                 <input
@@ -392,6 +422,28 @@ const Admin = () => {
                   className="rounded border-border text-cinema-red focus:ring-cinema-red"
                 />
                 <label htmlFor="featured" className="text-foreground-secondary">Featured Movie</label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="forceOpenPredictions"
+                  checked={formData.forceOpenPredictions || false}
+                  onChange={(e) => setFormData({ ...formData, forceOpenPredictions: e.target.checked })}
+                  className="rounded border-border text-cinema-red focus:ring-cinema-red"
+                />
+                <label htmlFor="forceOpenPredictions" className="text-foreground-secondary">Force open predictions</label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="forceCloseReviews"
+                  checked={formData.forceCloseReviews || false}
+                  onChange={(e) => setFormData({ ...formData, forceCloseReviews: e.target.checked })}
+                  className="rounded border-border text-cinema-red focus:ring-cinema-red"
+                />
+                <label htmlFor="forceCloseReviews" className="text-foreground-secondary">Force close reviews</label>
               </div>
             </div>
 

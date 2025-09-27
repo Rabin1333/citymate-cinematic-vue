@@ -249,24 +249,63 @@ const MovieDetails = () => {
           </div>
         </div>
         
-        {/* Predict-the-Plot Section */}
-        <div className="mt-8">
-          <PredictThePlotSection
-            movieId={movie.id}
-            movieTitle={movie.title}
-            isReleased={movie.status === 'now-showing'}
-            releaseDate={movie.releaseDate}
-          />
-        </div>
+        {/* Conditional Predict-the-Plot Section */}
+        {(() => {
+          const now = new Date();
+          const releaseDate = movie.releaseDate ? new Date(movie.releaseDate) : null;
+          const isPredictionsOpen = movie.status === 'coming-soon' && (!releaseDate || now < releaseDate);
+          
+          if (isPredictionsOpen) {
+            return (
+              <div className="mt-8">
+                <PredictThePlotSection
+                  movieId={movie.id}
+                  movieTitle={movie.title}
+                  isReleased={false}
+                  releaseDate={movie.releaseDate}
+                />
+              </div>
+            );
+          } else if (movie.status === 'coming-soon') {
+            return (
+              <div className="mt-8">
+                <div className="bg-card rounded-2xl p-6 border border-border text-center">
+                  <h3 className="text-xl font-semibold mb-2">Predict-the-Plot</h3>
+                  <p className="text-muted-foreground">Predictions are closed for this movie</p>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
         
-        {/* Reviews Section */}
-        <div className="mt-8">
-          <MovieReviewsSection 
-            movieId={movie.id} 
-            avgRating={(movie as any).avgRating || 0}
-            reviewCount={(movie as any).reviewCount || 0}
-          />
-        </div>
+        {/* Conditional Reviews Section */}
+        {(() => {
+          const now = new Date();
+          const releaseDate = movie.releaseDate ? new Date(movie.releaseDate) : null;
+          const isReviewsOpen = movie.status === 'now-showing' || (releaseDate && now >= releaseDate);
+          
+          if (isReviewsOpen) {
+            return (
+              <div className="mt-8">
+                <MovieReviewsSection 
+                  movieId={movie.id} 
+                  avgRating={(movie as any).avgRating || 0}
+                  reviewCount={(movie as any).reviewCount || 0}
+                />
+              </div>
+            );
+          } else {
+            return (
+              <div className="mt-8">
+                <div className="bg-card rounded-2xl p-6 border border-border text-center">
+                  <h3 className="text-xl font-semibold mb-2">Reviews</h3>
+                  <p className="text-muted-foreground">Reviews will open once the movie is released.</p>
+                </div>
+              </div>
+            );
+          }
+        })()}
       </div>
     </div>
   );

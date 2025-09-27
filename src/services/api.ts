@@ -1102,6 +1102,7 @@ export async function getAuditoriumPreviews(auditoriumId: string): Promise<Audit
 /** ----------------- Predictions System ----------------- **/
 export interface Prediction {
   _id: string;
+  userId?: { _id: string; name: string };
   predictionText: string;
   createdAt: string;
   updatedAt: string;

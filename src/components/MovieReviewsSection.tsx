@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Star, Shield, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Shield, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getMovieReviews, Review } from "@/services/api";
+import { getMovieReviews, Review, getCurrentUser } from "@/services/api";
+import { ReviewModal } from "@/components/ReviewModal";
 import { format } from "date-fns";
 
 interface MovieReviewsSectionProps {
@@ -23,6 +24,10 @@ export const MovieReviewsSection: React.FC<MovieReviewsSectionProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState("recent");
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  
+  const currentUser = getCurrentUser();
+  const isLoggedIn = !!currentUser;
 
   useEffect(() => {
     fetchReviews();
@@ -89,18 +94,30 @@ export const MovieReviewsSection: React.FC<MovieReviewsSectionProps> = ({
           )}
         </div>
         
-        {reviews.length > 0 && (
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">Recent</SelectItem>
-              <SelectItem value="highest">Highest</SelectItem>
-              <SelectItem value="lowest">Lowest</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
+        <div className="flex items-center gap-2">
+          {isLoggedIn && (
+            <Button 
+              onClick={() => setShowReviewModal(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Write Review
+            </Button>
+          )}
+          
+          {reviews.length > 0 && (
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Recent</SelectItem>
+                <SelectItem value="highest">Highest</SelectItem>
+                <SelectItem value="lowest">Lowest</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {reviews.length === 0 ? (
@@ -163,6 +180,17 @@ export const MovieReviewsSection: React.FC<MovieReviewsSectionProps> = ({
           )}
         </div>
       )}
+      
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        movieId={movieId}
+        onReviewSubmitted={() => {
+          fetchReviews();
+          setShowReviewModal(false);
+        }}
+      />
     </div>
   );
 };

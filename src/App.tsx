@@ -19,6 +19,8 @@ import TheaterManagement from "./pages/TheaterManagement";
 import UserManagement from "./pages/UserManagement";
 import MarketingDashboard from "./pages/MarketingDashboard";
 import ReportsAnalytics from "./pages/ReportsAnalytics";
+import AdminPredictions from "./pages/AdminPredictions";
+import AdminReviews from "./pages/AdminReviews";
 import UserProfile from "@/pages/UserProfile";
 import NotFound from "./pages/NotFound";
 
@@ -86,6 +88,16 @@ const App = () => (
             <Route path="admin/reports" element={
               <RequireAuth>
                 <ReportsAnalytics />
+              </RequireAuth>
+            } />
+            <Route path="admin/predictions" element={
+              <RequireAuth>
+                <AdminPredictions />
+              </RequireAuth>
+            } />
+            <Route path="admin/reviews" element={
+              <RequireAuth>
+                <AdminReviews />
               </RequireAuth>
             } />
             
