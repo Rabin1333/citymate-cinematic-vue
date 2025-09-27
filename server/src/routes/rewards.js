@@ -5,13 +5,14 @@ const { requireAuth } = require("../middleware/auth");
 const Reward = require("../models/Reward");
 const Booking = require("../models/Booking");
 
-// Helper function to check premium seats
-function countPremiumSeats(seats) {
-  // Premium seats are in rows C, D, E (based on SeatSelection.tsx logic)
+// Helper function to check premium and VIP seat eligibility
+function countPremiumVipSeats(seats) {
+  // Premium seats are in rows C, D, E; VIP seats are in rows A, B
   const premiumRows = ['C', 'D', 'E'];
+  const vipRows = ['A', 'B'];
   return seats.filter(seatId => {
     const row = seatId.charAt(0); // First character is the row
-    return premiumRows.includes(row);
+    return premiumRows.includes(row) || vipRows.includes(row);
   }).length;
 }
 
@@ -91,12 +92,12 @@ router.post("/spin", requireAuth, async (req, res) => {
       });
     }
 
-    // Check premium seat eligibility (≥3 premium seats)
-    const premiumSeatsCount = countPremiumSeats(booking.seats);
-    if (premiumSeatsCount < 3) {
+    // Check Premium or VIP seat eligibility (≥3 premium or VIP seats)
+    const eligibleSeatsCount = countPremiumVipSeats(booking.seats);
+    if (eligibleSeatsCount < 3) {
       return res.status(400).json({ 
-        message: "Booking must have at least 3 premium seats to spin",
-        premiumSeats: premiumSeatsCount
+        message: "Booking must have at least 3 Premium or VIP seats to spin",
+        eligibleSeats: eligibleSeatsCount
       });
     }
 

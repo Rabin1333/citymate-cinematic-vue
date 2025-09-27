@@ -85,14 +85,15 @@ const Payment = () => {
 
   const bookingDate = new Date(booking.createdAt).toLocaleDateString();
 
-  // Check if booking has 3+ premium seats (rows C, D, E)
-  const checkPremiumEligibility = (seats: string[]) => {
+  // Check if booking has 3+ premium or VIP seats (Premium: rows C, D, E; VIP: rows A, B)
+  const checkPremiumVipEligibility = (seats: string[]) => {
     const premiumRows = ['C', 'D', 'E'];
-    const premiumSeats = seats.filter(seatId => {
+    const vipRows = ['A', 'B'];
+    const eligibleSeats = seats.filter(seatId => {
       const row = seatId.charAt(0);
-      return premiumRows.includes(row);
+      return premiumRows.includes(row) || vipRows.includes(row);
     });
-    return premiumSeats.length >= 3;
+    return eligibleSeats.length >= 3;
   };
 
   const handlePayment = async () => {
@@ -137,8 +138,8 @@ const Payment = () => {
         description: "Your booking has been confirmed!",
       });
 
-      // Check if eligible for spin wheel
-      const isEligible = checkPremiumEligibility(booking.seats);
+      // Check if eligible for spin wheel (Premium OR VIP)
+      const isEligible = checkPremiumVipEligibility(booking.seats);
       if (isEligible) {
         setShowSpinModal(true);
       } else {

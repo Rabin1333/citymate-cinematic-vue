@@ -75,7 +75,7 @@ const SpinWheelModal = ({ isOpen, onClose, onSpin, onContinue }: SpinWheelModalP
                 </h2>
                 
                 <p className="text-foreground-secondary">
-                  You have 3+ premium seats! Spin the wheel to win exciting rewards!
+                  You have 3+ Premium or VIP seats! Spin the wheel to win exciting rewards!
                 </p>
               </div>
 

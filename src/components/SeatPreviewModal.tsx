@@ -1,8 +1,7 @@
 // src/components/SeatPreviewModal.tsx
 import { useState, useEffect, useRef } from "react";
-import { X, RotateCw, Info, Eye } from "lucide-react";
+import { X, RotateCw, Info, Eye, Play, Pause, Volume2, VolumeX, Maximize, Download } from "lucide-react";
 import * as THREE from "three";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getAuditoriumPreviews, type AuditoriumPreview } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
@@ -20,8 +19,12 @@ const SeatPreviewModal = ({ isOpen, onClose, auditoriumId, zoneId, zoneName }: S
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoError, setVideoError] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
   const mountRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
@@ -79,8 +82,8 @@ const SeatPreviewModal = ({ isOpen, onClose, auditoriumId, zoneId, zoneName }: S
     if (!isOpen || !preview || preview.videoUrl || videoError === false || !mountRef.current) return;
 
     const mount = mountRef.current;
-    const width = mount.clientWidth;
-    const height = mount.clientHeight;
+    const width = mount.clientWidth || window.innerWidth;
+    const height = mount.clientHeight || window.innerHeight;
 
     // Scene setup
     const scene = new THREE.Scene();
@@ -295,6 +298,9 @@ const SeatPreviewModal = ({ isOpen, onClose, auditoriumId, zoneId, zoneName }: S
     setPreview(null);
     setError(null);
     setVideoError(false);
+    setIsPlaying(true);
+    setIsMuted(false);
+    setVolume(1);
     onClose();
   };
 
@@ -303,100 +309,194 @@ const SeatPreviewModal = ({ isOpen, onClose, auditoriumId, zoneId, zoneName }: S
     setVideoError(true);
   };
 
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleVolumeChange = (newVolume: number) => {
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      setVolume(newVolume);
+      setIsMuted(newVolume === 0);
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
   const showVideo = preview?.videoUrl && !videoError;
   const showImage = preview && (!preview.videoUrl || videoError);
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Eye className="h-5 w-5 text-cinema-red" />
-            View - {zoneName} Seating
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="flex-1 p-6 pt-4">
+    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm animate-fade-in">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 cursor-pointer" 
+        onClick={handleBackdropClick}
+        aria-label="Close preview"
+      />
+      
+      {/* Container */}
+      <div 
+        ref={containerRef}
+        className="relative w-full h-full flex flex-col"
+      >
+        {/* Top Bar */}
+        <div className="relative z-10 flex items-center justify-between p-4 bg-background/10 backdrop-blur-md border-b border-border/20">
+          <div className="flex items-center gap-3">
+            <Eye className="h-6 w-6 text-primary" />
+            <h2 className="text-xl font-semibold text-foreground">
+              {zoneName} Seating Preview
+            </h2>
+          </div>
+          
+          <Button
+            onClick={handleClose}
+            variant="ghost"
+            size="icon"
+            className="hover:bg-destructive/20 hover:text-destructive"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 flex items-center justify-center p-4">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cinema-red mx-auto mb-4"></div>
-                <p className="text-foreground-secondary">Loading preview...</p>
-              </div>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-lg text-muted-foreground">Loading preview...</p>
             </div>
           ) : error ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Info className="h-12 w-12 text-foreground-secondary mx-auto mb-4" />
-                <p className="text-lg font-medium text-foreground mb-2">Preview Not Available</p>
-                <p className="text-foreground-secondary">{error}</p>
-                <Button 
-                  onClick={handleClose}
-                  className="mt-4"
-                  variant="outline"
-                >
-                  Close
-                </Button>
-              </div>
+            <div className="text-center max-w-md">
+              <Info className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">Preview Not Available</h3>
+              <p className="text-muted-foreground mb-6">{error}</p>
+              <Button onClick={handleClose} variant="outline">
+                Close
+              </Button>
             </div>
           ) : preview ? (
-            <div className="h-full flex flex-col">
-              {/* Video or Image Content */}
-              <div className="flex-1 flex items-center justify-center bg-black rounded-xl overflow-hidden">
+            <div className="w-full h-full flex flex-col">
+              {/* Main Media Content */}
+              <div className="flex-1 flex items-center justify-center">
                 {showVideo ? (
-                  <video 
-                    ref={videoRef}
-                    src={preview.videoUrl}
-                    className="w-full h-auto rounded-xl"
-                    controls
-                    autoPlay
-                    loop
-                    playsInline
-                    onError={handleVideoError}
-                  />
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <video 
+                      ref={videoRef}
+                      src={preview.videoUrl}
+                      className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                      autoPlay
+                      loop
+                      playsInline
+                      onError={handleVideoError}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
+                      onVolumeChange={(e) => {
+                        const video = e.target as HTMLVideoElement;
+                        setVolume(video.volume);
+                        setIsMuted(video.muted);
+                      }}
+                    />
+                    
+                    {/* Video Controls Overlay */}
+                    <div className="absolute bottom-4 left-4 right-4 bg-black/50 backdrop-blur-sm rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Button
+                            onClick={togglePlayPause}
+                            variant="ghost"
+                            size="icon"
+                            className="text-white hover:bg-white/20"
+                          >
+                            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                          </Button>
+                          
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={toggleMute}
+                              variant="ghost"
+                              size="icon"
+                              className="text-white hover:bg-white/20"
+                            >
+                              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                            </Button>
+                            <input
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.1"
+                              value={volume}
+                              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                              className="w-20 accent-primary"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs text-white/70">
+                          Download disabled
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ) : showImage ? (
-                  // Fallback to 360° image viewer
-                  <div className="w-full h-full relative" ref={mountRef}>
-                    {/* Three.js will mount here */}
+                  <div className="w-full h-full" ref={mountRef}>
+                    {/* Three.js 360° viewer will mount here */}
                   </div>
                 ) : null}
               </div>
 
-              {/* Description */}
-              {preview.description && (
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-foreground-secondary">
+              {/* Bottom Info */}
+              <div className="relative z-10 p-4 bg-background/10 backdrop-blur-md space-y-3">
+                {preview.description && (
+                  <p className="text-center text-muted-foreground">
                     {preview.description}
                   </p>
-                </div>
-              )}
-
-              {/* Instructions - only show for 360° images */}
-              {showImage && (
-                <div className="mt-4 p-4 bg-cinema-red/10 border border-cinema-red/20 rounded-lg">
-                  <div className="flex items-center gap-2 text-cinema-red mb-2">
-                    <RotateCw className="h-4 w-4" />
-                    <span className="text-sm font-medium">Navigation</span>
+                )}
+                
+                {showImage && (
+                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <RotateCw className="h-4 w-4" />
+                      <span>Drag to rotate</span>
+                    </div>
+                    <div>•</div>
+                    <div>Scroll to zoom</div>
+                    <div>•</div>
+                    <div>Press ESC to close</div>
                   </div>
-                  <p className="text-xs text-foreground-secondary">
-                    Click and drag to look around • Scroll to zoom • Use arrow keys for keyboard navigation
-                  </p>
-                </div>
-              )}
-
-              {/* Video fallback message */}
-              {videoError && preview.videoUrl && (
-                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    Video preview could not be loaded, showing 360° image instead.
-                  </p>
-                </div>
-              )}
+                )}
+                
+                {videoError && preview.videoUrl && (
+                  <div className="text-center text-sm text-yellow-400">
+                    Video unavailable, showing 360° image
+                  </div>
+                )}
+              </div>
             </div>
           ) : null}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
