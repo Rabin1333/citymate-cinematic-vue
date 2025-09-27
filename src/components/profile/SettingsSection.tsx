@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Sparkles, Volume } from "lucide-react";
+import { useCinematicEffects } from "../../contexts/CinematicEffectsContext";
 
 // Mock API functions
 const updateSettings = async (settings: any) => {
@@ -23,6 +24,13 @@ export const SettingsSection = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const {
+    cinematicEffectsEnabled,
+    setCinematicEffectsEnabled,
+    microAudioMuted,
+    setMicroAudioMuted
+  } = useCinematicEffects();
   
   const [settings, setSettings] = useState({
     notifications: {
@@ -173,6 +181,49 @@ export const SettingsSection = () => {
             <Switch
               checked={settings.notifications.reminders}
               onCheckedChange={(checked) => updateNotificationSetting('reminders', checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cinematic Effects */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-cinema-red" />
+            Cinematic Effects
+          </CardTitle>
+          <CardDescription>
+            Control immersive movie-themed effects and audio
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Cinematic Effects</Label>
+              <p className="text-sm text-muted-foreground">
+                Enable themed visual effects when interacting with movies
+              </p>
+            </div>
+            <Switch
+              checked={cinematicEffectsEnabled}
+              onCheckedChange={setCinematicEffectsEnabled}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="flex items-center gap-2">
+                <Volume className="h-4 w-4" />
+                Mute Micro-Audio
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Disable sound effects while keeping visual effects
+              </p>
+            </div>
+            <Switch
+              checked={microAudioMuted}
+              onCheckedChange={setMicroAudioMuted}
             />
           </div>
         </CardContent>

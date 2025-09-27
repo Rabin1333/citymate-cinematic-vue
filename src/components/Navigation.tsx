@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Film, Settings, LogOut, User, Search, Filter, ChevronDown } from 'lucide-react';
 import { clearAuth, getCurrentUser, getMovies, type UiMovie } from '../services/api';
 import { useSearch } from '../contexts/SearchContext';
+import { useTriggerEffect } from '../hooks/useCinematicEffects';
+import { findEffectByInput } from '../utils/cinematicEffects';
 import MovieCountdown from './MovieCountdown';
 import MovieCountdownDropdown from './MovieCountdownDropdown';
 import NavbarCountdown from './NavbarCountdown';
@@ -19,6 +21,7 @@ const Navigation = () => {
   const isAdmin = currentUser?.role === 'admin';
   
   const { searchTerm, setSearchTerm, selectedGenre, setSelectedGenre } = useSearch();
+  const triggerEffect = useTriggerEffect();
 
   // Fetch movies for genre dropdown
   useEffect(() => {
@@ -40,6 +43,13 @@ const Navigation = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for cinematic effect triggers
+    const effectKey = findEffectByInput(searchTerm);
+    if (effectKey) {
+      triggerEffect(effectKey, 'search');
+    }
+    
     if (location.pathname !== '/movies') {
       navigate('/movies');
     }

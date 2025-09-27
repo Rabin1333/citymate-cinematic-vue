@@ -1,13 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Calendar, Clock, MapPin, Star, Play } from "lucide-react";
 import { getMovieById, getShowtimes, type UiMovie } from "../services/api";
 import { MovieReviewsSection } from "@/components/MovieReviewsSection";
 import PredictThePlotSection from "@/components/PredictThePlotSection";
+import { useTriggerEffect } from "../hooks/useCinematicEffects";
+import { findEffectByTitle } from "../utils/cinematicEffects";
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const triggerEffect = useTriggerEffect();
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const hasTriggeredEffect = useRef(false);
 
   const [movie, setMovie] = useState<UiMovie | null>(null);
   const [times, setTimes] = useState<string[]>([]);
@@ -48,6 +53,31 @@ const MovieDetails = () => {
       }
     })();
   }, [id]);
+
+  // Trigger cinematic effect when title becomes visible
+  useEffect(() => {
+    if (movie && titleRef.current && !hasTriggeredEffect.current) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const effectKey = findEffectByTitle(movie.title);
+              if (effectKey) {
+                triggerEffect(effectKey, 'detailsView', entry.target as HTMLElement);
+                hasTriggeredEffect.current = true;
+              }
+              observer.disconnect();
+            }
+          });
+        },
+        { threshold: 0.5 }
+      );
+
+      observer.observe(titleRef.current);
+      
+      return () => observer.disconnect();
+    }
+  }, [movie, triggerEffect]);
 
   const handleBooking = () => {
     if (movie && selectedTime) {
@@ -111,7 +141,7 @@ const MovieDetails = () => {
                 <span className="text-foreground-secondary">{movie.releaseYear}</span>
               </div>
 
-              <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              <h1 ref={titleRef} className="text-4xl lg:text-5xl font-bold text-foreground mb-4">
                 {movie.title}
               </h1>
 

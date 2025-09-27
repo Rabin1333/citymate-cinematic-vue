@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Clock, Star, Calendar } from "lucide-react";
+import { useTriggerEffect } from "../hooks/useCinematicEffects";
+import { findEffectByTitle } from "../utils/cinematicEffects";
 
 // Support BOTH: mock Movie (from src/data/movies) and API movie (UiMovie)
 import type { Movie as MockMovie } from "../data/movies";
@@ -15,6 +17,8 @@ interface MovieCardProps {
 }
 
 const MovieCard = ({ movie, className = "" }: MovieCardProps) => {
+  const triggerEffect = useTriggerEffect();
+  
   // id may be number or string; use a string for routes/keys
   const idStr = String(movie.id);
 
@@ -24,8 +28,19 @@ const MovieCard = ({ movie, className = "" }: MovieCardProps) => {
       ? movie.poster
       : movie.poster;
 
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Check for cinematic effect triggers
+    const effectKey = findEffectByTitle(movie.title);
+    if (effectKey) {
+      triggerEffect(effectKey, 'cardClick', e.currentTarget);
+    }
+  };
+
   return (
-    <div className={`movie-card group ${className} relative overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:rotate-y-2 perspective-1000`}>
+    <div 
+      className={`movie-card group ${className} relative overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:rotate-y-2 perspective-1000 cursor-pointer`}
+      onClick={handleCardClick}
+    >
       {/* Cyber Glow Border */}
       <div className="absolute inset-0 bg-gradient-cyber opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       

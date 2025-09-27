@@ -342,3 +342,13 @@ All colors MUST be HSL. Neon-inspired cinematic experience.
 .transform-gpu {
   transform: translate3d(0, 0, 0);
 }
+
+/* Cinematic Effects Animations */
+@keyframes drift {
+  0% {
+    transform: translateX(-100px) translateY(-100px);
+  }
+  100% {
+    transform: translateX(100vw) translateY(100vh);
+  }
+}
