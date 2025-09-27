@@ -112,7 +112,7 @@ All colors MUST be HSL. Neon-inspired cinematic experience.
   /* Futuristic Neon Button Variants */
   .btn-neon {
     @apply relative bg-transparent border-2 border-neon-red text-neon-red font-semibold px-8 py-4 rounded-xl;
-    @apply overflow-hidden transition-all duration-400 hover:text-white hover:scale-105;
+    @apply overflow-hidden transition-all duration-300 hover:text-white hover:scale-105;
     @apply focus:outline-none focus:ring-2 focus:ring-neon-red/50;
     box-shadow: 0 0 20px hsl(var(--neon-red) / 0.3);
   }
@@ -120,7 +120,7 @@ All colors MUST be HSL. Neon-inspired cinematic experience.
   .btn-neon::before {
     content: '';
     @apply absolute inset-0 bg-gradient-to-r from-neon-red to-neon-red-glow opacity-0;
-    @apply transition-opacity duration-400;
+    @apply transition-opacity duration-300;
     z-index: -1;
   }
   
@@ -146,14 +146,14 @@ All colors MUST be HSL. Neon-inspired cinematic experience.
   /* Futuristic Movie Card Styles */
   .movie-card {
     @apply bg-card rounded-2xl overflow-hidden border border-cyber-border/50;
-    @apply transition-all duration-400 hover:scale-[1.02] hover:border-neon-red/50;
-    @apply relative group;
+    @apply transition-all duration-300 hover:scale-[1.02] hover:border-neon-red/50;
+    @apply relative;
     box-shadow: var(--shadow-card);
   }
   
   .movie-card::before {
     content: '';
-    @apply absolute inset-0 opacity-0 transition-opacity duration-400 pointer-events-none;
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none;
     background: var(--gradient-cyber);
     z-index: 1;
   }
