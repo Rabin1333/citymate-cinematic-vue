@@ -25,15 +25,15 @@ const MovieCard = ({ movie, className = "" }: MovieCardProps) => {
       : movie.poster;
 
   return (
-    <div className={`movie-card group ${className} relative overflow-hidden`}>
+    <div className={`movie-card group ${className} relative overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:rotate-y-2 perspective-1000`}>
       {/* Cyber Glow Border */}
       <div className="absolute inset-0 bg-gradient-cyber opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
-      <div className="relative overflow-hidden rounded-t-2xl">
+      <div className="relative overflow-hidden rounded-t-2xl transform-gpu transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-primary/20">
         <img
           src={posterSrc}
           alt={movie.title}
-          className="w-full h-80 object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
+          className="w-full h-80 object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110 group-hover:contrast-110"
         />
         
         {/* Neon Overlay Effect */}

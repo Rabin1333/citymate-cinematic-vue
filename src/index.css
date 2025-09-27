@@ -70,6 +70,9 @@ All colors MUST be HSL. Neon-inspired cinematic experience.
     --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     --transition-quick: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* 3D Transform Perspective */
+    --perspective: 1000px;
 
     --sidebar-background: 0 0% 98%;
 
@@ -325,4 +328,17 @@ All colors MUST be HSL. Neon-inspired cinematic experience.
 
 .text-cyber-glow {
   text-shadow: 0 0 15px hsl(var(--neon-blue) / 0.6);
+}
+
+/* 3D Effects */
+.perspective-1000 {
+  perspective: var(--perspective);
+}
+
+.rotate-y-2 {
+  transform: rotateY(2deg);
+}
+
+.transform-gpu {
+  transform: translate3d(0, 0, 0);
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import HeroSection from "../components/HeroSection";
 import MovieSection from "../components/MovieSection";
+import FeaturesCTA from "../components/FeaturesCTA";
+import Footer from "../components/Footer";
 import { getMovies, type UiMovie } from "../services/api";
 
 const Index = () => {
@@ -42,6 +44,9 @@ const Index = () => {
           We'll update HeroSection next to fetch the featured movie from the API. */}
       <HeroSection />
 
+      {/* Features CTA Section */}
+      <FeaturesCTA />
+
       <MovieSection
         title="Now Showing"
         // If MovieSection's prop type still expects the mock Movie type,
@@ -56,6 +61,9 @@ const Index = () => {
         viewAllLink="/movies"
         onReminderSet={() => setRefreshKey(prev => prev + 1)}
       />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
