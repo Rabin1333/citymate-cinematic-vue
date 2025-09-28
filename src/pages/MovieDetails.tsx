@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Calendar, Clock, MapPin, Star, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getMovieById, getShowtimes, type UiMovie } from "../services/api";
 import { MovieReviewsSection } from "@/components/MovieReviewsSection";
 import PredictThePlotSection from "@/components/PredictThePlotSection";
@@ -268,13 +269,14 @@ const MovieDetails = () => {
                 </div>
               </div>
 
-              <button
+              <Button
                 onClick={handleBooking}
                 disabled={!selectedTime}
-                className="w-full btn-cinema disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="cta"
+                className="w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:animate-none"
               >
                 Select Seats
-              </button>
+              </Button>
             </div>
           </div>
         </div>

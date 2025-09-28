@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Monitor, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getMovies, createBooking } from "../services/api"; // <-- API calls
 import type { UiMovie } from "../services/api";
 import { useToast } from "@/hooks/use-toast";
@@ -383,13 +384,14 @@ const SeatSelection = () => {
                   </>
                 )}
 
-                <button
+                <Button
                   onClick={handleProceedToPayment}
                   disabled={selectedSeats.length === 0}
-                  className="w-full btn-cinema disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="cta"
+                  className="w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:animate-none"
                 >
                   {selectedSeats.length === 0 ? "Select Seats" : "Proceed to Payment"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

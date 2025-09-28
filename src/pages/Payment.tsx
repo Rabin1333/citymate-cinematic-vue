@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getBookingById, spinReward, createBooking, getToken, confirmParking, releaseParking, type FoodOrderItem, type ParkingReservation } from "../services/api";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import SpinWheelModal from "@/components/SpinWheelModal";
 import FoodMenu from "@/components/FoodMenu";
 import ParkingSection from "@/components/ParkingSection";
@@ -233,13 +234,14 @@ const Payment = () => {
             </div>
           </div>
 
-          <button
-            className="btn-cinema w-full"
+          <Button
+            variant="cta"
+            className="w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:animate-none"
             onClick={handlePayment}
             disabled={processingPayment}
           >
             {processingPayment ? "Processing..." : "Pay Now"}
-          </button>
+          </Button>
         </div>
 
         {/* Food Pre-ordering Section */}
