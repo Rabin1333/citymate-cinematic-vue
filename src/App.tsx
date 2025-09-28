@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useParticleEffects } from "./hooks/useParticleEffects";
+import { useAdvancedEffects } from "./hooks/useAdvancedEffects";
 import Layout from "./components/Layout";
 import RequireAuth from "@/components/RequireAuth";
 import Index from "./pages/Index";
@@ -29,6 +30,16 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   useParticleEffects();
+  
+  // Initialize award-winning Hollywood-grade VFX
+  const { triggerEffect, isInitialized } = useAdvancedEffects({
+    enableParticles: true,
+    enableFluidDynamics: true,
+    enableCinematicLighting: true,
+    particleCount: 500,
+    performanceMode: 'high',
+    filmGrainIntensity: 0.15
+  });
   
   return (
     <BrowserRouter>
