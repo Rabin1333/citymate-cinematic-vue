@@ -38,7 +38,13 @@ const Footer = () => {
               City Mate Movie
             </h3>
             <p className="text-sm text-muted-foreground">
-              © 2024 City Mate Movie. Experience cinema like never before.
+              © 2024 City Mate Movie. Experience cinema like never before. 
+              //Created By:
+              Rabin Basnet,
+               Aadarsh Singh,
+                Bishal Mishra,
+                 Bijay Abiral,
+                   Peter Tamang
             </p>
           </div>
 
