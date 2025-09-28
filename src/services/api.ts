@@ -1,18 +1,12 @@
-// src/services/api.ts - COMPLETE VERSION WITH ALL FEATURES
-const getApiBase = () => {
-  // Try environment variable first, then fallback to window location for production
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl) return envUrl;
-  
-  // In development, use localhost:4000 but fallback to current origin if connection fails
-  if (import.meta.env.DEV) return "http://localhost:4000";
-  
-  // In production, construct from window.location
-  const { protocol, hostname, port } = window.location;
-  return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
-};
+// src/services/api.ts - FIXED VERSION (always uses backend API in production)
+const normalize = (s: string) => s.replace(/\/+$/, "");
 
-export const BASE = getApiBase();
+export const BASE =
+  import.meta.env.PROD
+    // In production, always use the provided API URL (default to your Render backend if missing)
+    ? normalize(import.meta.env.VITE_API_URL || "https://citymate.onrender.com")
+    // In development, point to local backend
+    : "http://localhost:4000";
 
 // Mock data fallbacks when backend is unavailable
 const mockFoodItems: FoodItem[] = [
