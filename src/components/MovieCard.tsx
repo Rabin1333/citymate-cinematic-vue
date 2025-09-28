@@ -38,7 +38,7 @@ const MovieCard = ({ movie, className = "" }: MovieCardProps) => {
 
   return (
     <div 
-      className={`movie-card group ${className} relative overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:rotate-y-2 perspective-1000 cursor-pointer`}
+      className={`movie-card group ${className} relative overflow-hidden transform transition-all duration-500 hover:-translate-y-2 hover:rotate-y-2 perspective-1000 cursor-pointer liquid-morph quantum-field ambient-occlusion`}
       onClick={handleCardClick}
     >
       {/* Cyber Glow Border */}

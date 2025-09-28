@@ -40,12 +40,41 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+  ({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
+    const Comp = asChild ? Slot : "button";
+
+    React.useImperativeHandle(ref, () => buttonRef.current!);
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      const button = buttonRef.current;
+      if (button) {
+        const rect = button.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        button.style.setProperty('--click-x', `${x}%`);
+        button.style.setProperty('--click-y', `${y}%`);
+        
+        button.classList.add('shatter-active');
+        
+        setTimeout(() => {
+          button.classList.remove('shatter-active');
+        }, 600);
+      }
+      
+      onClick?.(e);
+    };
+
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
+        ref={buttonRef}
+        className={cn(
+          buttonVariants({ variant, size }),
+          "magnetic-button elastic-deform crystalline-shatter",
+          className
+        )}
+        onClick={handleClick}
         {...props}
       />
     )

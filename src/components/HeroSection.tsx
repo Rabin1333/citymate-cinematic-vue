@@ -75,7 +75,7 @@ const HeroSection = () => {
   const currentMovie = featuredMovies[currentMovieIndex];
 
   return (
-    <section className="relative h-[120vh] flex items-center justify-center overflow-hidden bg-space-gradient">
+    <section className="relative h-[120vh] flex items-center justify-center overflow-hidden bg-space-gradient volumetric-light god-rays">
       {/* Cyber Grid Background */}
       <div className="absolute inset-0 bg-cyber-grid opacity-30" />
       
